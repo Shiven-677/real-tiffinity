@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:practise/data/constants.dart';
 import 'package:practise/data/notifiers.dart';
-import 'package:practise/views/pages/customer_pages/home_page.dart';
-import 'package:practise/views/pages/customer_pages/profile_page.dart';
-import 'package:practise/views/pages/customer_pages/settings_page.dart';
+import 'package:practise/views/pages/customer_pages/customer_home_page.dart';
+import 'package:practise/views/pages/customer_pages/customer_profile_page.dart';
+import 'package:practise/views/pages/customer_pages/customer_settings_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../widgets/navbar_widget.dart';
+import '../../widgets/customer_navbar_widget.dart';
 
-class WidgetTree extends StatelessWidget {
-  const WidgetTree({super.key});
+class CustomerWidgetTree extends StatelessWidget {
+  const CustomerWidgetTree({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> pages = [HomePage(), ProfilePage()];
+    final List<Widget> pages = [CustomerHomePage(), CustomerProfilePage()];
     return Scaffold(
       //app bar
       appBar: AppBar(
@@ -46,7 +46,7 @@ class WidgetTree extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) {
-                    return SettingsPage(
+                    return CustomerSettingsPage(
                       title: 'Settingsss',
                     ); //navigate to settings page
                   },
@@ -59,7 +59,7 @@ class WidgetTree extends StatelessWidget {
       ),
 
       body: ValueListenableBuilder(
-        valueListenable: selectedPageNotifier,
+        valueListenable: customerSelectedPageNotifier,
         builder: (context, selectedPage, child) {
           return pages.elementAt(selectedPage);
         },

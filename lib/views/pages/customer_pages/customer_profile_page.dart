@@ -3,8 +3,8 @@ import 'package:practise/data/notifiers.dart';
 import 'package:practise/services/auth_services.dart';
 import 'package:practise/views/auth/welcome_page.dart';
 
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+class CustomerProfilePage extends StatelessWidget {
+  const CustomerProfilePage({super.key});
 
   Future<void> _logout(BuildContext context) async {
     final confirmed = await showDialog<bool>(
@@ -35,7 +35,7 @@ class ProfilePage extends StatelessWidget {
         if (!context.mounted) return;
 
         // Reset navigation and app state
-        selectedPageNotifier.value = 0;
+        customerSelectedPageNotifier.value = 0;
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const WelcomePage()),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class SettingsPage extends StatefulWidget {
-  const SettingsPage({
+class CustomerSettingsPage extends StatefulWidget {
+  const CustomerSettingsPage({
     super.key,
     required this.title, //send the title
   });
@@ -9,10 +9,10 @@ class SettingsPage extends StatefulWidget {
   final String title;
 
   @override
-  State<SettingsPage> createState() => _SettingsPageState();
+  State<CustomerSettingsPage> createState() => _CustomerSettingsPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> {
+class _CustomerSettingsPageState extends State<CustomerSettingsPage> {
   TextEditingController controller = TextEditingController();
   bool? isChecked = false;
   bool isSwitched = false;

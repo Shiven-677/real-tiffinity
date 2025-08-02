@@ -55,7 +55,7 @@ class HomePage extends StatelessWidget {
             ),
 
             CardWidget(
-              title: 'XCode Mess',
+              title: 'rohit gay',
               description: 'Suitable for bulk orders and meal prep.',
               ratings: '4.8',
               distance: '0.2', //for mess information

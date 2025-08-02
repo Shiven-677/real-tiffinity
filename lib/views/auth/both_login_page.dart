@@ -2,7 +2,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:practise/services/auth_services.dart';
 import 'package:practise/views/auth/both_signup_page.dart';
-import 'package:practise/views/pages/customer_pages/home_page.dart';
 import 'package:practise/views/pages/customer_pages/widget_tree.dart';
 import 'package:practise/views/widgets/auth_field.dart';
 import 'package:practise/views/widgets/auth_gradient_button.dart';

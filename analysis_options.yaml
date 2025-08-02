@@ -1,0 +1,7 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  strong-mode: true
+
+formatter:
+  line-length: 60

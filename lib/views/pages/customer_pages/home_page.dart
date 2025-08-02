@@ -22,7 +22,7 @@ class HomePage extends StatelessWidget {
             ),
             SizedBox(height: 8.0),
             CardWidget(
-              title: 'Shree Sai Tiffins',
+              title: 'Zoey kitchen',
               description:
                   'Specialized in south Indian cuisine, offering a variety of tiffin services.',
               ratings: '4.5',

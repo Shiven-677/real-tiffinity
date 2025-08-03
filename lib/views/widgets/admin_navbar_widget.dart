@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:practise/data/notifiers.dart';
 
-class CustomerNavbarWidget extends StatelessWidget {
-  const CustomerNavbarWidget({super.key});
+class AdminNavbarWidget extends StatelessWidget {
+  const AdminNavbarWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
-      valueListenable: customerSelectedPageNotifier,
+      valueListenable: adminSelectedPageNotifier,
       builder: (context, selectedPage, child) {
         return NavigationBar(
           destinations: [
             NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
+            NavigationDestination(icon: Icon(Icons.menu_book), label: 'Menu'),
             NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
           ], //total 2 items
           onDestinationSelected: (int value) {
-            customerSelectedPageNotifier.value = value;
+            adminSelectedPageNotifier.value = value;
           },
           selectedIndex: selectedPage,
         );

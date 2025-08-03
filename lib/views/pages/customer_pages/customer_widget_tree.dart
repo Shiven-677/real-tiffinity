@@ -16,7 +16,7 @@ class CustomerWidgetTree extends StatelessWidget {
     return Scaffold(
       //app bar
       appBar: AppBar(
-        title: Text("Tiffinity", style: TextStyle(fontSize: 29)), //title
+        title: Text("Admin", style: TextStyle(fontSize: 29)), //title
 
         centerTitle: true,
 
@@ -66,7 +66,7 @@ class CustomerWidgetTree extends StatelessWidget {
       ),
 
       //bottom navigation bar
-      bottomNavigationBar: NavbarWidget(),
+      bottomNavigationBar: CustomerNavbarWidget(),
     );
   }
 }

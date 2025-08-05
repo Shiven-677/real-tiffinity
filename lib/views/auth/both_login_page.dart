@@ -91,64 +91,69 @@ class _BothLoginPageState extends State<BothLoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(18.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "Login.",
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 50),
-            AuthField(
-              hintText: "Email",
-              icon: Icons.email,
-              controller: emailController,
-            ),
-            const SizedBox(height: 18),
-            AuthField(
-              hintText: "Password",
-              icon: Icons.lock,
-              isPassword: true,
-              controller: passwordController,
-            ),
-            const SizedBox(height: 50),
-            AuthGradientButton(
-              title: "Sign in",
-              onpressed: _handleLogin,
-              isLoading: _isLoading,
-            ),
-            const SizedBox(height: 15),
-            RichText(
-              text: TextSpan(
-                text: "Don't have an account? ",
-                style: Theme.of(context).textTheme.titleMedium,
-                children: [
-                  TextSpan(
-                    text: "Sign Up",
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: const Color.fromARGB(255, 0, 117, 105),
-                      fontWeight: FontWeight.bold,
-                    ),
-                    recognizer:
-                        TapGestureRecognizer()
-                          ..onTap = () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) =>
-                                        BothSignupPage(role: widget.role),
-                              ),
-                            );
-                          },
-                  ),
-                ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(18.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "Login.",
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 50,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 50),
+              AuthField(
+                hintText: "Email",
+                icon: Icons.email,
+                controller: emailController,
+              ),
+              const SizedBox(height: 18),
+              AuthField(
+                hintText: "Password",
+                icon: Icons.lock,
+                isPassword: true,
+                controller: passwordController,
+              ),
+              const SizedBox(height: 50),
+              AuthGradientButton(
+                title: "Sign in",
+                onpressed: _handleLogin,
+                isLoading: _isLoading,
+              ),
+              const SizedBox(height: 15),
+              RichText(
+                text: TextSpan(
+                  text: "Don't have an account? ",
+                  style: Theme.of(context).textTheme.titleMedium,
+                  children: [
+                    TextSpan(
+                      text: "Sign Up",
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: const Color.fromARGB(255, 0, 117, 105),
+                        fontWeight: FontWeight.bold,
+                      ),
+                      recognizer:
+                          TapGestureRecognizer()
+                            ..onTap = () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) =>
+                                          BothSignupPage(role: widget.role),
+                                ),
+                              );
+                            },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

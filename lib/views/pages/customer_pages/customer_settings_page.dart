@@ -170,6 +170,7 @@ class _CustomerSettingsPageState extends State<CustomerSettingsPage> {
                   color: Colors.white12,
                 ),
                 onTap: () {
+                  // ignore: avoid_print
                   print("Image tapped");
                 },
               ),

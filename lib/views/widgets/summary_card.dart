@@ -6,11 +6,11 @@ class SummaryCard extends StatelessWidget {
   final int pending;
 
   const SummaryCard({
-    Key? key,
+    super.key,
     required this.totalOrders,
     required this.delivered,
     required this.pending,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,21 +23,23 @@ class SummaryCard extends StatelessWidget {
           children: [
             const Text(
               "Today's Summary",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildSummaryItem(
-                    totalOrders.toString(), "Total Orders", Colors.orange),
+                  totalOrders.toString(),
+                  "Total Orders",
+                  Colors.orange,
+                ),
                 _buildSummaryItem(
-                    delivered.toString(), "Delivered", Colors.green),
-                _buildSummaryItem(
-                    pending.toString(), "Pending", Colors.red),
+                  delivered.toString(),
+                  "Delivered",
+                  Colors.green,
+                ),
+                _buildSummaryItem(pending.toString(), "Pending", Colors.red),
               ],
             ),
           ],
@@ -59,10 +61,7 @@ class SummaryCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 14),
-        ),
+        Text(label, style: const TextStyle(fontSize: 14)),
       ],
     );
   }

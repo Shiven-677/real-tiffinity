@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:practise/views/widgets/order_widget.dart';
-import 'package:practise/views/widgets/summary_card.dart';
+import 'package:Tiffinity/views/widgets/order_widget.dart';
+import 'package:Tiffinity/views/widgets/summary_card.dart';
 
 class AdminHomePage extends StatelessWidget {
   const AdminHomePage({super.key});

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:practise/data/notifiers.dart';
+import 'package:Tiffinity/data/notifiers.dart';
 
 class AdminNavbarWidget extends StatelessWidget {
   const AdminNavbarWidget({super.key});

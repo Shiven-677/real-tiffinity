@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:practise/data/constants.dart';
+import 'package:Tiffinity/data/constants.dart';
 
 class CardWidget extends StatelessWidget {
   const CardWidget({

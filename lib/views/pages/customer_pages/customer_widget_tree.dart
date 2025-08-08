@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:practise/data/constants.dart';
-import 'package:practise/data/notifiers.dart';
-import 'package:practise/views/pages/customer_pages/customer_home_page.dart';
-import 'package:practise/views/pages/customer_pages/customer_profile_page.dart';
-import 'package:practise/views/pages/customer_pages/customer_settings_page.dart';
+import 'package:Tiffinity/data/constants.dart';
+import 'package:Tiffinity/data/notifiers.dart';
+import 'package:Tiffinity/views/pages/customer_pages/customer_home_page.dart';
+import 'package:Tiffinity/views/pages/customer_pages/customer_profile_page.dart';
+import 'package:Tiffinity/views/pages/customer_pages/customer_settings_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/customer_navbar_widget.dart';
 
@@ -16,7 +16,7 @@ class CustomerWidgetTree extends StatelessWidget {
     return Scaffold(
       //app bar
       appBar: AppBar(
-        title: Text("Tiffinity", style: TextStyle(fontSize: 29)), //title
+        title: Text("Admin", style: TextStyle(fontSize: 29)), //title
 
         centerTitle: true,
 

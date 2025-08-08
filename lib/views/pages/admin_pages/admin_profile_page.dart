@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:practise/data/notifiers.dart';
-import 'package:practise/services/auth_services.dart';
-import 'package:practise/views/auth/welcome_page.dart';
+import 'package:Tiffinity/data/notifiers.dart';
+import 'package:Tiffinity/services/auth_services.dart';
+import 'package:Tiffinity/views/auth/welcome_page.dart';
 
 class AdminProfilePage extends StatelessWidget {
   const AdminProfilePage({super.key});

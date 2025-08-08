@@ -16,7 +16,7 @@ class CustomerWidgetTree extends StatelessWidget {
     return Scaffold(
       //app bar
       appBar: AppBar(
-        title: Text("Admin", style: TextStyle(fontSize: 29)), //title
+        title: Text("Tiffinity", style: TextStyle(fontSize: 29)), //title
 
         centerTitle: true,
 

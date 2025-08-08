@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:practise/views/auth/both_login_page.dart';
+import 'package:Tiffinity/views/auth/both_login_page.dart';
 
 class RoleSelectionPage extends StatelessWidget {
   const RoleSelectionPage({super.key});

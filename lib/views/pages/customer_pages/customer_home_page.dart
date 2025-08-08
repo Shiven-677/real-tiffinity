@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:practise/views/widgets/card_widget.dart';
+import 'package:Tiffinity/views/widgets/card_widget.dart';
 
 class CustomerHomePage extends StatelessWidget {
   const CustomerHomePage({super.key});

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:practise/data/constants.dart';
-import 'package:practise/data/notifiers.dart';
-import 'package:practise/views/pages/admin_pages/admin_home_page.dart';
-import 'package:practise/views/pages/admin_pages/admin_menu_page.dart';
-import 'package:practise/views/pages/admin_pages/admin_profile_page.dart';
-import 'package:practise/views/pages/customer_pages/customer_settings_page.dart';
-import 'package:practise/views/widgets/admin_navbar_widget.dart';
+import 'package:Tiffinity/data/constants.dart';
+import 'package:Tiffinity/data/notifiers.dart';
+import 'package:Tiffinity/views/pages/admin_pages/admin_home_page.dart';
+import 'package:Tiffinity/views/pages/admin_pages/admin_menu_page.dart';
+import 'package:Tiffinity/views/pages/admin_pages/admin_profile_page.dart';
+import 'package:Tiffinity/views/pages/customer_pages/customer_settings_page.dart';
+import 'package:Tiffinity/views/widgets/admin_navbar_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AdminWidgetTree extends StatelessWidget {

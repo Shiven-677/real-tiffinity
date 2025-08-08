@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:practise/views/auth/onboarding.dart';
+import 'package:Tiffinity/views/auth/onboarding.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});

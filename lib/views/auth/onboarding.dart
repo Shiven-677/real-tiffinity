@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:practise/data/constants.dart';
-import 'package:practise/views/auth/role_selection_page.dart';
+import 'package:Tiffinity/data/constants.dart';
+import 'package:Tiffinity/views/auth/role_selection_page.dart';
 
 class OnboardingPage extends StatelessWidget {
   const OnboardingPage({super.key});

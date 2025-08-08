@@ -92,105 +92,72 @@ class _BothLoginPageState extends State<BothLoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Stack(
-          children: [
-            // Main Content
-            SingleChildScrollView(
-              padding: const EdgeInsets.all(18.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 50), // space for skip button
-                  Text(
-                    "Login.",
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 50,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 50),
-                  AuthField(
-                    hintText: "Email",
-                    icon: Icons.email,
-                    controller: emailController,
-                  ),
-                  const SizedBox(height: 18),
-                  AuthField(
-                    hintText: "Password",
-                    icon: Icons.lock,
-                    isPassword: true,
-                    controller: passwordController,
-                  ),
-                  const SizedBox(height: 50),
-                  AuthGradientButton(
-                    title: "Sign in",
-                    onpressed: _handleLogin,
-                    isLoading: _isLoading,
-                  ),
-                  const SizedBox(height: 15),
-                  RichText(
-                    text: TextSpan(
-                      text: "Don't have an account? ",
-                      style: Theme.of(context).textTheme.titleMedium,
-                      children: [
-                        TextSpan(
-                          text: "Sign Up",
-                          style: Theme.of(
-                            context,
-                          ).textTheme.titleMedium?.copyWith(
-                            color: const Color.fromARGB(255, 0, 117, 105),
-                            fontWeight: FontWeight.bold,
-                          ),
-                          recognizer:
-                              TapGestureRecognizer()
-                                ..onTap = () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) =>
-                                              BothSignupPage(role: widget.role),
-                                    ),
-                                  );
-                                },
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Skip button at top right
-            Positioned(
-              top: 10,
-              right: 10,
-              child: TextButton(
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (_) =>
-                              widget.role == 'customer'
-                                  ? const CustomerWidgetTree()
-                                  : const AdminWidgetTree(),
-                    ),
-                    (route) => false,
-                  );
-                },
-                child: const Text(
-                  "Skip",
-                  style: TextStyle(
-                    fontSize: 16,
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(18.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "Login.",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 50,
                     fontWeight: FontWeight.bold,
-                    color: Colors.blue,
                   ),
                 ),
-              ),
+                const SizedBox(height: 50),
+                AuthField(
+                  hintText: "Email",
+                  icon: Icons.email,
+                  controller: emailController,
+                ),
+                const SizedBox(height: 18),
+                AuthField(
+                  hintText: "Password",
+                  icon: Icons.lock,
+                  isPassword: true,
+                  controller: passwordController,
+                ),
+                const SizedBox(height: 50),
+                AuthGradientButton(
+                  title: "Sign in",
+                  onpressed: _handleLogin,
+                  isLoading: _isLoading,
+                ),
+                const SizedBox(height: 15),
+                RichText(
+                  text: TextSpan(
+                    text: "Don't have an account? ",
+                    style: Theme.of(context).textTheme.titleMedium,
+                    children: [
+                      TextSpan(
+                        text: "Sign Up",
+                        style: Theme.of(
+                          context,
+                        ).textTheme.titleMedium?.copyWith(
+                          color: const Color.fromARGB(255, 0, 117, 105),
+                          fontWeight: FontWeight.bold,
+                        ),
+                        recognizer:
+                            TapGestureRecognizer()
+                              ..onTap = () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) =>
+                                            BothSignupPage(role: widget.role),
+                                  ),
+                                );
+                              },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

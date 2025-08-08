@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:practise/data/constants.dart';
-import 'package:practise/data/notifiers.dart';
-import 'package:practise/views/auth/welcome_page.dart';
+import 'package:tiffinity/data/constants.dart';
+import 'package:tiffinity/data/notifiers.dart';
+import 'package:tiffinity/views/auth/welcome_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 

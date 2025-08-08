@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:Tiffinity/data/notifiers.dart';
+import 'package:flutter/material.dart';
 
 class CustomerNavbarWidget extends StatelessWidget {
   const CustomerNavbarWidget({super.key});

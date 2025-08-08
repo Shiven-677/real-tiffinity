@@ -4,6 +4,8 @@ import 'package:practise/data/notifiers.dart';
 import 'package:practise/views/auth/welcome_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:practise/views/pages/admin_pages/admin_home_page.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,7 +46,8 @@ class _MyAppState extends State<MyApp> {
               brightness: isDarkMode ? Brightness.dark : Brightness.light,
             ),
           ),
-          home: const WelcomePage(),
+          home: WelcomePage(),
+
         );
       },
     );

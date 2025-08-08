@@ -3,7 +3,7 @@ import 'package:practise/views/widgets/order_widget.dart';
 import 'package:practise/views/widgets/summary_card.dart';
 
 class AdminHomePage extends StatelessWidget {
-  const AdminHomePage({Key? key}) : super(key: key);
+  const AdminHomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -32,11 +32,7 @@ class AdminHomePage extends StatelessWidget {
         child: Column(
           children: [
             // Step 1: Today's Summary Card
-            SummaryCard(
-              totalOrders: 120,
-              delivered: 95,
-              pending: 25,
-            ),
+            SummaryCard(totalOrders: 120, delivered: 95, pending: 25),
 
             const SizedBox(height: 16),
 

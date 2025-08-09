@@ -5,10 +5,10 @@ class SearchFilterBar extends StatelessWidget {
   final VoidCallback onFilterPressed;
 
   const SearchFilterBar({
-    Key? key,
+    super.key,
     required this.onSearchChanged,
     required this.onFilterPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +21,11 @@ class SearchFilterBar extends StatelessWidget {
               onChanged: onSearchChanged,
               decoration: const InputDecoration(
                 prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(25),
+                  ), // adjust roundedness
+                ),
                 hintText: 'Search...',
               ),
             ),

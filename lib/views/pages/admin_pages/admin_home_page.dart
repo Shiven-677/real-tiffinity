@@ -4,7 +4,7 @@ import 'package:Tiffinity/views/widgets/summary_card.dart';
 import 'package:Tiffinity/views/widgets/search_filter_bar.dart';
 
 class AdminHomePage extends StatefulWidget {
-  const AdminHomePage({Key? key}) : super(key: key);
+  const AdminHomePage({super.key});
 
   @override
   State<AdminHomePage> createState() => _AdminHomePageState();
@@ -41,18 +41,20 @@ class _AdminHomePageState extends State<AdminHomePage> {
 
   void _updateFilters() {
     setState(() {
-      _filteredOrders = _orders.where((order) {
-        final matchesStatus = _selectedStatus == "All" ||
-            order['status'] == _selectedStatus;
-        final matchesSearch = _searchQuery.isEmpty ||
-            order['customerName']!
-                .toLowerCase()
-                .contains(_searchQuery.toLowerCase()) ||
-            order['item']!
-                .toLowerCase()
-                .contains(_searchQuery.toLowerCase());
-        return matchesStatus && matchesSearch;
-      }).toList();
+      _filteredOrders =
+          _orders.where((order) {
+            final matchesStatus =
+                _selectedStatus == "All" || order['status'] == _selectedStatus;
+            final matchesSearch =
+                _searchQuery.isEmpty ||
+                order['customerName']!.toLowerCase().contains(
+                  _searchQuery.toLowerCase(),
+                ) ||
+                order['item']!.toLowerCase().contains(
+                  _searchQuery.toLowerCase(),
+                );
+            return matchesStatus && matchesSearch;
+          }).toList();
     });
   }
 
@@ -102,6 +104,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

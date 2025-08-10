@@ -1,35 +1,97 @@
 import 'package:flutter/material.dart';
 
 class OrderWidget extends StatelessWidget {
+  final String orderNumber;
   final String customerName;
   final String itemName;
   final String status;
+  final String time;
 
   const OrderWidget({
     super.key,
+    required this.orderNumber,
     required this.customerName,
     required this.itemName,
     required this.status,
+    required this.time,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      child: ListTile(
-        title: Text(
-          customerName,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(itemName),
-        trailing: Text(
-          status,
-          style: TextStyle(
-            color:
-                status.toLowerCase() == 'pending'
-                    ? Colors.orange
-                    : Colors.green,
-          ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 3,
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Order Number
+            Text(
+              "Order #$orderNumber",
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 4),
+
+            // Customer Name & Status Row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  customerName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: status.toLowerCase() == 'pending'
+                        ? Colors.orange.withOpacity(0.2)
+                        : Colors.green.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    status,
+                    style: TextStyle(
+                      color: status.toLowerCase() == 'pending'
+                          ? Colors.orange
+                          : Colors.green,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 6),
+
+            // Item Name
+            Text(
+              itemName,
+              style: const TextStyle(fontSize: 16),
+            ),
+
+            const SizedBox(height: 6),
+
+            // Time
+            Row(
+              children: [
+                const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text(
+                  time,
+                  style: const TextStyle(color: Colors.grey),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

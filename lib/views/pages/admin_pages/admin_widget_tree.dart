@@ -7,6 +7,8 @@ import 'package:Tiffinity/views/pages/admin_pages/admin_profile_page.dart';
 import 'package:Tiffinity/views/pages/customer_pages/customer_settings_page.dart';
 import 'package:Tiffinity/views/widgets/admin_navbar_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:Tiffinity/views/pages/admin_pages/menu_management_page.dart';
+
 
 class AdminWidgetTree extends StatelessWidget {
   const AdminWidgetTree({super.key});
@@ -15,7 +17,7 @@ class AdminWidgetTree extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       AdminHomePage(),
-      AdminMenuPage(),
+      MenuManagementPage(),
       AdminProfilePage(),
     ];
     return Scaffold(

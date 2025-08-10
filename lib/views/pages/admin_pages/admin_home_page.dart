@@ -13,19 +13,25 @@ class AdminHomePage extends StatefulWidget {
 class _AdminHomePageState extends State<AdminHomePage> {
   final List<Map<String, String>> _orders = [
     {
+      'orderNumber': '0005',
       'customerName': 'Rohit Naik',
       'item': 'Paneer Butter Masala',
       'status': 'Pending',
+      'time': '5:55'
     },
     {
-      'customerName': 'Jane Smith',
+      'orderNumber': '0007',
+      'customerName': 'Dhevesh Pujari',
       'item': 'Veg Biryani',
       'status': 'Delivered',
+      'time': '7:77'
     },
     {
-      'customerName': 'Amit Sharma',
+      'orderNumber': '0001',
+      'customerName': 'Modi',
       'item': 'Roti with Dal',
       'status': 'Pending',
+      'time': '4:10'
     },
   ];
 
@@ -41,20 +47,18 @@ class _AdminHomePageState extends State<AdminHomePage> {
 
   void _updateFilters() {
     setState(() {
-      _filteredOrders =
-          _orders.where((order) {
-            final matchesStatus =
-                _selectedStatus == "All" || order['status'] == _selectedStatus;
-            final matchesSearch =
-                _searchQuery.isEmpty ||
-                order['customerName']!.toLowerCase().contains(
+      _filteredOrders = _orders.where((order) {
+        final matchesStatus =
+            _selectedStatus == "All" || order['status'] == _selectedStatus;
+        final matchesSearch = _searchQuery.isEmpty ||
+            order['customerName']!.toLowerCase().contains(
                   _searchQuery.toLowerCase(),
                 ) ||
-                order['item']!.toLowerCase().contains(
+            order['item']!.toLowerCase().contains(
                   _searchQuery.toLowerCase(),
                 );
-            return matchesStatus && matchesSearch;
-          }).toList();
+        return matchesStatus && matchesSearch;
+      }).toList();
     });
   }
 
@@ -108,36 +112,43 @@ class _AdminHomePageState extends State<AdminHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("")),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Summary card
-            SummaryCard(totalOrders: 120, delivered: 95, pending: 25),
-            const SizedBox(height: 16),
+      // Removed the appBar completely
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+             // Top icons row
 
-            // Search + Filter bar
-            SearchFilterBar(
-              onSearchChanged: _filterOrders,
-              onFilterPressed: _showFilterOptions,
-            ),
-            const SizedBox(height: 10),
+              // Summary card
+              SummaryCard(totalOrders: 120, delivered: 95, pending: 25),
+              const SizedBox(height: 16),
 
-            // Orders list
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _filteredOrders.length,
-              itemBuilder: (context, index) {
-                final order = _filteredOrders[index];
-                return OrderWidget(
-                  customerName: order['customerName']!,
-                  itemName: order['item']!,
-                  status: order['status']!,
-                );
-              },
-            ),
-          ],
+              // Search + Filter bar
+              SearchFilterBar(
+                onSearchChanged: _filterOrders,
+                onFilterPressed: _showFilterOptions,
+              ),
+              const SizedBox(height: 10),
+
+              // Orders list
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _filteredOrders.length,
+                itemBuilder: (context, index) {
+                  final order = _filteredOrders[index];
+                  return OrderWidget(
+                    orderNumber:
+                        order['orderNumber'] ?? (index + 1).toString(),
+                    customerName: order['customerName']!,
+                    itemName: order['item']!,
+                    status: order['status']!,
+                    time: order['time'] ?? '',
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:Tiffinity/services/auth_services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:Tiffinity/views/auth/both_login_page.dart';
 import 'package:Tiffinity/views/pages/admin_pages/admin_widget_tree.dart';
 import 'package:Tiffinity/views/pages/customer_pages/customer_widget_tree.dart';
@@ -16,7 +17,6 @@ class BothSignupPage extends StatefulWidget {
 }
 
 class _BothSignupPageState extends State<BothSignupPage> {
-  final AuthService _auth = AuthService();
   bool passwordsDoNotMatch = false;
   bool _isLoading = false;
 
@@ -50,21 +50,8 @@ class _BothSignupPageState extends State<BothSignupPage> {
       confirmPasswordController,
       phoneNumController,
     ])) {
+      _showError("Please fill all the fields");
       setState(() => _isLoading = false);
-      showDialog(
-        context: context,
-        builder:
-            (context) => AlertDialog(
-              title: const Text("Validation Error"),
-              content: const Text("Please fill all the fields"),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("OK"),
-                ),
-              ],
-            ),
-      );
       return;
     }
 
@@ -77,10 +64,26 @@ class _BothSignupPageState extends State<BothSignupPage> {
     }
 
     try {
-      await _auth.signUp(
-        email: emailController.text,
-        password: passwordController.text,
-      );
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: passwordController.text.trim(),
+          );
+
+      // Save user details in Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .set(
+            {
+              'name': nameController.text.trim(),
+              'email': emailController.text.trim(),
+              'phone': phoneNumController.text.trim(),
+              'role': widget.role, // Ensure role is set from widget
+              'createdAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          ); // Use merge to not overwrite existing data
 
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
@@ -94,25 +97,28 @@ class _BothSignupPageState extends State<BothSignupPage> {
         ),
         (route) => false,
       );
-    } on AuthException catch (e) {
-      if (!mounted) return;
-      showDialog(
-        context: context,
-        builder:
-            (context) => AlertDialog(
-              title: const Text("Sign Up Error"),
-              content: Text(e.message),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("OK"),
-                ),
-              ],
-            ),
-      );
+    } on FirebaseAuthException catch (e) {
+      _showError(e.message ?? "Sign up failed");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _showError(String message) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text("Error"),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("OK"),
+              ),
+            ],
+          ),
+    );
   }
 
   @override
@@ -131,10 +137,10 @@ class _BothSignupPageState extends State<BothSignupPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Spacer(flex: 2),
-                      Text(
+                      const Text(
                         "Sign Up.",
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 48,
                           fontWeight: FontWeight.bold,
                         ),
@@ -196,8 +202,8 @@ class _BothSignupPageState extends State<BothSignupPage> {
           controller: confirmPasswordController,
         ),
         if (passwordsDoNotMatch)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
+          const Padding(
+            padding: EdgeInsets.only(top: 8),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(

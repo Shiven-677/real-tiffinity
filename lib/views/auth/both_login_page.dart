@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:Tiffinity/services/auth_services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:Tiffinity/views/auth/both_signup_page.dart';
 import 'package:Tiffinity/views/pages/admin_pages/admin_widget_tree.dart';
 import 'package:Tiffinity/views/pages/customer_pages/customer_widget_tree.dart';
@@ -16,7 +17,6 @@ class BothLoginPage extends StatefulWidget {
 }
 
 class _BothLoginPageState extends State<BothLoginPage> {
-  final AuthService _auth = AuthService();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool _isLoading = false;
@@ -30,30 +30,40 @@ class _BothLoginPageState extends State<BothLoginPage> {
 
   Future<void> _handleLogin() async {
     if (!validateFields([emailController, passwordController])) {
-      showDialog(
-        context: context,
-        builder:
-            (context) => AlertDialog(
-              title: const Text("Validation Error"),
-              content: const Text("Please fill all the fields"),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("OK"),
-                ),
-              ],
-            ),
-      );
+      _showError("Please fill all the fields");
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      await _auth.signIn(
-        email: emailController.text,
-        password: passwordController.text,
-      );
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: passwordController.text.trim(),
+          );
+
+      // Get role from Firestore
+      DocumentSnapshot userDoc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userCredential.user!.uid)
+              .get();
+
+      if (!userDoc.exists) {
+        _showError("User record not found");
+        return;
+      }
+
+      String storedRole = userDoc['role'] ?? '';
+
+      // Verify selected role matches stored role
+      if (storedRole != widget.role) {
+        _showError(
+          "You are registered as a $storedRole. Please select $storedRole role to login.",
+        );
+        return;
+      }
 
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
@@ -61,31 +71,34 @@ class _BothLoginPageState extends State<BothLoginPage> {
         MaterialPageRoute(
           builder:
               (_) =>
-                  widget.role == 'customer'
+                  storedRole == 'customer'
                       ? const CustomerWidgetTree()
                       : const AdminWidgetTree(),
         ),
         (route) => false,
       );
-    } on AuthException catch (e) {
-      if (!mounted) return;
-      showDialog(
-        context: context,
-        builder:
-            (context) => AlertDialog(
-              title: const Text("Login Failed"),
-              content: Text(e.message),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("OK"),
-                ),
-              ],
-            ),
-      );
+    } on FirebaseAuthException catch (e) {
+      _showError(e.message ?? "Login failed");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _showError(String message) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text("Error"),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("OK"),
+              ),
+            ],
+          ),
+    );
   }
 
   @override
@@ -98,13 +111,10 @@ class _BothLoginPageState extends State<BothLoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
+                const Text(
                   "Login.",
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 50,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 50),
                 AuthField(

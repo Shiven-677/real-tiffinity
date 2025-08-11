@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'add_menu_item_page.dart';
 import 'package:photo_view/photo_view.dart';
-import 'package:photo_view/photo_view_gallery.dart';
-
 
 class MenuManagementPage extends StatefulWidget {
   const MenuManagementPage({super.key});
@@ -14,7 +12,7 @@ class MenuManagementPage extends StatefulWidget {
 }
 
 class _MenuManagementPageState extends State<MenuManagementPage> {
-  List<Map<String, dynamic>> _menuItems = [];
+  final List<Map<String, dynamic>> _menuItems = [];
 
   void _addMenuItem() async {
     final newItem = await Navigator.push(
@@ -33,22 +31,23 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => Scaffold(
-          backgroundColor: Colors.black,
-          body: PhotoViewGallery.builder(
-            itemCount: images.length,
-            builder: (context, index) {
-              return PhotoViewGalleryPageOptions(
-                imageProvider: FileImage(images[index]),
-                minScale: PhotoViewComputedScale.contained,
-                maxScale: PhotoViewComputedScale.covered * 2,
-              );
-            },
-            scrollPhysics: const BouncingScrollPhysics(),
-            backgroundDecoration: const BoxDecoration(color: Colors.black),
-            pageController: PageController(initialPage: initialIndex),
-          ),
-        ),
+        builder:
+            (_) => Scaffold(
+              backgroundColor: Colors.black,
+              body: PhotoViewGallery.builder(
+                itemCount: images.length,
+                builder: (context, index) {
+                  return PhotoViewGalleryPageOptions(
+                    imageProvider: FileImage(images[index]),
+                    minScale: PhotoViewComputedScale.contained,
+                    maxScale: PhotoViewComputedScale.covered * 2,
+                  );
+                },
+                scrollPhysics: const BouncingScrollPhysics(),
+                backgroundDecoration: const BoxDecoration(color: Colors.black),
+                pageController: PageController(initialPage: initialIndex),
+              ),
+            ),
       ),
     );
   }
@@ -68,12 +67,19 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
               children: [
                 Text(
                   "Current items: ${_menuItems.length}",
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.add_circle, size: 30, color: Colors.green),
+                  icon: const Icon(
+                    Icons.add_circle,
+                    size: 30,
+                    color: Colors.green,
+                  ),
                   onPressed: _addMenuItem,
-                )
+                ),
               ],
             ),
             const SizedBox(height: 10),
@@ -98,7 +104,9 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
                         (item['images'] ?? []).cast<File>();
 
                     return Card(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       elevation: 3,
                       margin: const EdgeInsets.symmetric(vertical: 8),
                       child: Padding(
@@ -112,7 +120,10 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
                               children: [
                                 Text(
                                   item['name'],
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
                                 ),
                                 Text(
                                   "₹${item['price']}",
@@ -126,8 +137,10 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
                             const SizedBox(height: 4),
 
                             // Type
-                            Text("Type: ${item['type']}",
-                                style: const TextStyle(color: Colors.grey)),
+                            Text(
+                              "Type: ${item['type']}",
+                              style: const TextStyle(color: Colors.grey),
+                            ),
 
                             const SizedBox(height: 8),
 
@@ -140,7 +153,11 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
                                   itemCount: images.length,
                                   itemBuilder: (context, imgIndex) {
                                     return GestureDetector(
-                                      onTap: () => _openImagePreview(images, imgIndex),
+                                      onTap:
+                                          () => _openImagePreview(
+                                            images,
+                                            imgIndex,
+                                          ),
                                       child: Container(
                                         margin: const EdgeInsets.only(right: 8),
                                         child: Image.file(
@@ -160,7 +177,7 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
                     );
                   },
                 ),
-              )
+              ),
           ],
         ),
       ),

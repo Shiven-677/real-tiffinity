@@ -11,31 +11,42 @@ class AdminHomePage extends StatefulWidget {
 }
 
 class _AdminHomePageState extends State<AdminHomePage> {
-  final List<Map<String, String>> _orders = [
+  final List<Map<String, dynamic>> _orders = [
     {
       'orderNumber': '0005',
       'customerName': 'Rohit Naik',
-      'item': 'Paneer Butter Masala',
-      'status': 'Pending',
-      'time': '5:55'
+      'items': [
+        {"no": 1, "qty": 2, "name": "Paneer Butter Masala", "price": 250},
+        {"no": 2, "qty": 1, "name": "Garlic Naan", "price": 50},
+      ],
+      'status': 'PAID',
+      'orderStatus': 'Pending',
+      'time': '5:55',
     },
     {
       'orderNumber': '0007',
       'customerName': 'Dhevesh Pujari',
-      'item': 'Veg Biryani',
-      'status': 'Delivered',
-      'time': '7:77'
+      'items': [
+        {"no": 1, "qty": 1, "name": "Veg Biryani", "price": 180},
+      ],
+      'status': 'UNPAID',
+      'orderStatus': 'Delivered',
+      'time': '7:77',
     },
     {
       'orderNumber': '0001',
       'customerName': 'Modi',
-      'item': 'Roti with Dal',
-      'status': 'Pending',
-      'time': '4:10'
+      'items': [
+        {"no": 1, "qty": 9, "name": "Roti", "price": 18},
+        {"no": 2, "qty": 2, "name": "Mixed Veg", "price": 80},
+      ],
+      'status': 'PAID',
+      'orderStatus': 'Pending',
+      'time': '4:10',
     },
   ];
 
-  late List<Map<String, String>> _filteredOrders;
+  late List<Map<String, dynamic>> _filteredOrders;
   String _selectedStatus = "All";
   String _searchQuery = "";
 
@@ -47,18 +58,24 @@ class _AdminHomePageState extends State<AdminHomePage> {
 
   void _updateFilters() {
     setState(() {
-      _filteredOrders = _orders.where((order) {
-        final matchesStatus =
-            _selectedStatus == "All" || order['status'] == _selectedStatus;
-        final matchesSearch = _searchQuery.isEmpty ||
-            order['customerName']!.toLowerCase().contains(
+      _filteredOrders =
+          _orders.where((order) {
+            final matchesStatus =
+                _selectedStatus == "All" || order['status'] == _selectedStatus;
+
+            final matchesSearch =
+                _searchQuery.isEmpty ||
+                order['customerName']!.toLowerCase().contains(
                   _searchQuery.toLowerCase(),
                 ) ||
-            order['item']!.toLowerCase().contains(
-                  _searchQuery.toLowerCase(),
+                (order['items'] as List).any(
+                  (item) => item['name'].toLowerCase().contains(
+                    _searchQuery.toLowerCase(),
+                  ),
                 );
-        return matchesStatus && matchesSearch;
-      }).toList();
+
+            return matchesStatus && matchesSearch;
+          }).toList();
     });
   }
 
@@ -117,7 +134,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-             // Top icons row
+              // Top icons row
 
               // Summary card
               SummaryCard(totalOrders: 120, delivered: 95, pending: 25),
@@ -137,13 +154,16 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 itemCount: _filteredOrders.length,
                 itemBuilder: (context, index) {
                   final order = _filteredOrders[index];
+
                   return OrderWidget(
-                    orderNumber:
-                        order['orderNumber'] ?? (index + 1).toString(),
-                    customerName: order['customerName']!,
-                    itemName: order['item']!,
+                    orderNumber: order['orderNumber'] ?? (index + 1).toString(),
+                    customerName: order['customerName'] ?? '',
                     status: order['status']!,
                     time: order['time'] ?? '',
+                    // Pass the bill data here
+                    items: List<Map<String, dynamic>>.from(
+                      order['items'] ?? [],
+                    ),
                   );
                 },
               ),

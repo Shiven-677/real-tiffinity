@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
+import 'items_ordered_widget.dart';
 
 class OrderWidget extends StatelessWidget {
   final String orderNumber;
   final String customerName;
-  final String itemName;
   final String status;
   final String time;
+  final List<Map<String, dynamic>> items; // bill items
 
   const OrderWidget({
-    super.key,
+    Key? key,
     required this.orderNumber,
     required this.customerName,
-    required this.itemName,
     required this.status,
     required this.time,
-  });
+    required this.items,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -50,34 +51,39 @@ class OrderWidget extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 4,
+                    horizontal: 8,
+                  ),
                   decoration: BoxDecoration(
-                    color: status.toLowerCase() == 'pending'
-                        ? Colors.orange.withOpacity(0.2)
-                        : Colors.green.withOpacity(0.2),
+                    color:
+                        status.toLowerCase() == 'pending'
+                            ? Colors.orange.withOpacity(0.2)
+                            : Colors.green.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     status,
                     style: TextStyle(
-                      color: status.toLowerCase() == 'pending'
-                          ? Colors.orange
-                          : Colors.green,
+                      color:
+                          status.toLowerCase() == 'pending'
+                              ? Colors.orange
+                              : Colors.green,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ],
             ),
-
             const SizedBox(height: 6),
 
-            // Item Name
-            Text(
-              itemName,
-              style: const TextStyle(fontSize: 16),
+            // Full Bill Section
+            OrderBill(
+              items: items,
+              status: status,
+              compact:
+                  true, // you can add this param in OrderBill for shorter style
             ),
-
             const SizedBox(height: 6),
 
             // Time
@@ -85,10 +91,7 @@ class OrderWidget extends StatelessWidget {
               children: [
                 const Icon(Icons.access_time, size: 16, color: Colors.grey),
                 const SizedBox(width: 4),
-                Text(
-                  time,
-                  style: const TextStyle(color: Colors.grey),
-                ),
+                Text(time, style: const TextStyle(color: Colors.grey)),
               ],
             ),
           ],

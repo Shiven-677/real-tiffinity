@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:photo_view/photo_view_gallery.dart';
-import 'add_menu_item_page.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:photo_view/photo_view_gallery.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'add_menu_item_page.dart';
 
 class MenuManagementPage extends StatefulWidget {
   const MenuManagementPage({super.key});
@@ -12,42 +14,102 @@ class MenuManagementPage extends StatefulWidget {
 }
 
 class _MenuManagementPageState extends State<MenuManagementPage> {
-  final List<Map<String, dynamic>> _menuItems = [];
+  List<Map<String, dynamic>> _menuItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMenuItems();
+  }
+
+  Future<void> _saveMenuItems() async {
+    final prefs = await SharedPreferences.getInstance();
+    final itemsToSave = _menuItems.map((item) {
+      return {
+        'name': item['name'],
+        'price': item['price'],
+        'type': item['type'],
+        'images':
+            (item['images'] as List<File>).map((file) => file.path).toList(),
+      };
+    }).toList();
+    prefs.setString('menu_items', jsonEncode(itemsToSave));
+  }
+
+  Future<void> _loadMenuItems() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString('menu_items');
+    if (data != null) {
+      final List decoded = jsonDecode(data);
+      setState(() {
+        _menuItems = decoded.map((item) {
+          return {
+            'name': item['name'],
+            'price': item['price'],
+            'type': item['type'],
+            'images':
+                (item['images'] as List).map((path) => File(path)).toList(),
+          };
+        }).toList();
+      });
+    }
+  }
 
   void _addMenuItem() async {
     final newItem = await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const AddMenuItemPage()),
     );
-
     if (newItem != null) {
       setState(() {
         _menuItems.add(newItem);
       });
+      _saveMenuItems();
     }
+  }
+
+  void _editMenuItem(int index) async {
+    final editedItem = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddMenuItemPage(existingItem: _menuItems[index]),
+      ),
+    );
+    if (editedItem != null) {
+      setState(() {
+        _menuItems[index] = editedItem;
+      });
+      _saveMenuItems();
+    }
+  }
+
+  void _deleteMenuItem(int index) {
+    setState(() {
+      _menuItems.removeAt(index);
+    });
+    _saveMenuItems();
   }
 
   void _openImagePreview(List<File> images, int initialIndex) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (_) => Scaffold(
-              backgroundColor: Colors.black,
-              body: PhotoViewGallery.builder(
-                itemCount: images.length,
-                builder: (context, index) {
-                  return PhotoViewGalleryPageOptions(
-                    imageProvider: FileImage(images[index]),
-                    minScale: PhotoViewComputedScale.contained,
-                    maxScale: PhotoViewComputedScale.covered * 2,
-                  );
-                },
-                scrollPhysics: const BouncingScrollPhysics(),
-                backgroundDecoration: const BoxDecoration(color: Colors.black),
-                pageController: PageController(initialPage: initialIndex),
-              ),
-            ),
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          body: PhotoViewGallery.builder(
+            itemCount: images.length,
+            builder: (context, index) {
+              return PhotoViewGalleryPageOptions(
+                imageProvider: FileImage(images[index]),
+                minScale: PhotoViewComputedScale.contained,
+                maxScale: PhotoViewComputedScale.covered * 2,
+              );
+            },
+            scrollPhysics: const BouncingScrollPhysics(),
+            backgroundDecoration: const BoxDecoration(color: Colors.black),
+            pageController: PageController(initialPage: initialIndex),
+          ),
+        ),
       ),
     );
   }
@@ -59,9 +121,7 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Row with count & add button
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -73,18 +133,13 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(
-                    Icons.add_circle,
-                    size: 30,
-                    color: Colors.green,
-                  ),
+                  icon: const Icon(Icons.add_circle,
+                      size: 30, color: Colors.green),
                   onPressed: _addMenuItem,
                 ),
               ],
             ),
             const SizedBox(height: 10),
-
-            // Show "Nothing to display" if empty
             if (_menuItems.isEmpty)
               const Expanded(
                 child: Center(
@@ -114,7 +169,6 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Name + Price
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -125,26 +179,35 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
                                     fontSize: 18,
                                   ),
                                 ),
-                                Text(
-                                  "₹${item['price']}",
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.green,
-                                  ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      "₹${item['price']}",
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.edit,
+                                          color: Colors.blue),
+                                      onPressed: () => _editMenuItem(index),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.red),
+                                      onPressed: () => _deleteMenuItem(index),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
                             const SizedBox(height: 4),
-
-                            // Type
                             Text(
                               "Type: ${item['type']}",
                               style: const TextStyle(color: Colors.grey),
                             ),
-
                             const SizedBox(height: 8),
-
-                            // Horizontal scroll for images
                             if (images.isNotEmpty)
                               SizedBox(
                                 height: 100,
@@ -153,13 +216,11 @@ class _MenuManagementPageState extends State<MenuManagementPage> {
                                   itemCount: images.length,
                                   itemBuilder: (context, imgIndex) {
                                     return GestureDetector(
-                                      onTap:
-                                          () => _openImagePreview(
-                                            images,
-                                            imgIndex,
-                                          ),
+                                      onTap: () => _openImagePreview(
+                                          images, imgIndex),
                                       child: Container(
-                                        margin: const EdgeInsets.only(right: 8),
+                                        margin:
+                                            const EdgeInsets.only(right: 8),
                                         child: Image.file(
                                           images[imgIndex],
                                           width: 100,

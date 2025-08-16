@@ -82,7 +82,7 @@ class OrderWidget extends StatelessWidget {
               items: items,
               status: status,
               compact:
-                  true, // you can add this param in OrderBill for shorter style
+                  false, // you can add this param in OrderBill for shorter style
             ),
             const SizedBox(height: 6),
 

@@ -6,11 +6,11 @@ class OrderBill extends StatelessWidget {
   final bool compact; // new: render a compact version for lists
 
   const OrderBill({
-    Key? key,
+    super.key,
     required this.items,
     required this.status,
     this.compact = false,
-  }) : super(key: key);
+  });
 
   double _calculateGrandTotal() {
     return items.fold(0, (sum, item) => sum + (item['qty'] * item['price']));

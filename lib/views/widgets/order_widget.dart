@@ -9,13 +9,13 @@ class OrderWidget extends StatelessWidget {
   final List<Map<String, dynamic>> items; // bill items
 
   const OrderWidget({
-    Key? key,
+    super.key,
     required this.orderNumber,
     required this.customerName,
     required this.status,
     required this.time,
     required this.items,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

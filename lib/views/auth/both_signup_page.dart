@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:Tiffinity/views/auth/both_login_page.dart';
-import 'package:Tiffinity/views/pages/admin_pages/admin_widget_tree.dart';
 import 'package:Tiffinity/views/pages/customer_pages/customer_widget_tree.dart';
 import 'package:Tiffinity/views/widgets/auth_field.dart';
 import 'package:Tiffinity/views/widgets/auth_gradient_button.dart';
+import 'package:Tiffinity/views/pages/admin_pages/admin_setup_page.dart'; // NEW
 
 class BothSignupPage extends StatefulWidget {
   final String role;
@@ -74,29 +74,32 @@ class _BothSignupPageState extends State<BothSignupPage> {
       await FirebaseFirestore.instance
           .collection('users')
           .doc(userCredential.user!.uid)
-          .set(
-            {
-              'name': nameController.text.trim(),
-              'email': emailController.text.trim(),
-              'phone': phoneNumController.text.trim(),
-              'role': widget.role, // Ensure role is set from widget
-              'createdAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          ); // Use merge to not overwrite existing data
+          .set({
+            'name': nameController.text.trim(),
+            'email': emailController.text.trim(),
+            'phone': phoneNumController.text.trim(),
+            'role': widget.role,
+            'createdAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
 
       if (!mounted) return;
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder:
-              (_) =>
-                  widget.role == 'customer'
-                      ? const CustomerWidgetTree()
-                      : const AdminWidgetTree(),
-        ),
-        (route) => false,
-      );
+
+      // Redirect based on role
+      if (widget.role == 'admin') {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AdminSetupPage(userId: userCredential.user!.uid),
+          ),
+          (route) => false,
+        );
+      } else {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const CustomerWidgetTree()),
+          (route) => false,
+        );
+      }
     } on FirebaseAuthException catch (e) {
       _showError(e.message ?? "Sign up failed");
     } finally {

@@ -4,7 +4,8 @@ import 'items_ordered_widget.dart';
 class OrderWidget extends StatelessWidget {
   final String orderNumber;
   final String customerName;
-  final String status;
+  final String orderStatus; // Pending / Completed
+  final String paymentStatus; // Paid / Unpaid
   final String time;
   final List<Map<String, dynamic>> items; // bill items
 
@@ -12,7 +13,8 @@ class OrderWidget extends StatelessWidget {
     super.key,
     required this.orderNumber,
     required this.customerName,
-    required this.status,
+    required this.orderStatus,
+    required this.paymentStatus,
     required this.time,
     required this.items,
   });
@@ -39,7 +41,7 @@ class OrderWidget extends StatelessWidget {
             ),
             const SizedBox(height: 4),
 
-            // Customer Name & Status Row
+            // Customer Name & Outer Order Status
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -57,17 +59,17 @@ class OrderWidget extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color:
-                        status.toLowerCase() == 'pending'
-                            ? Colors.orange.withOpacity(0.2)
+                        orderStatus.toLowerCase() == 'pending'
+                            ? Colors.amber.withOpacity(0.2)
                             : Colors.green.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    status,
+                    orderStatus.toUpperCase(),
                     style: TextStyle(
                       color:
-                          status.toLowerCase() == 'pending'
-                              ? Colors.orange
+                          orderStatus.toLowerCase() == 'pending'
+                              ? Colors.amber[800]
                               : Colors.green,
                       fontWeight: FontWeight.bold,
                     ),
@@ -80,9 +82,8 @@ class OrderWidget extends StatelessWidget {
             // Full Bill Section
             OrderBill(
               items: items,
-              status: status,
-              compact:
-                  true, // you can add this param in OrderBill for shorter style
+              status: paymentStatus, // <- inner bill still uses Paid/Unpaid
+              compact: false,
             ),
             const SizedBox(height: 6),
 

@@ -6,13 +6,21 @@ class AuthField extends StatefulWidget {
     required this.hintText,
     required this.icon,
     this.isPassword = false,
-    required this.controller,
+    this.controller,
+    this.dropdownItems,
+    this.dropdownValue,
+    this.onDropdownChanged,
   });
 
   final String hintText;
   final IconData icon;
   final bool isPassword;
-  final TextEditingController controller;
+  final TextEditingController? controller;
+
+  // Dropdown support
+  final List<String>? dropdownItems;
+  final String? dropdownValue;
+  final void Function(String?)? onDropdownChanged;
 
   @override
   State<AuthField> createState() => _AuthFieldState();
@@ -29,6 +37,37 @@ class _AuthFieldState extends State<AuthField> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.dropdownItems != null && widget.dropdownItems!.isNotEmpty) {
+      return InputDecorator(
+        decoration: InputDecoration(
+          contentPadding: const EdgeInsets.all(27.0),
+          hintText: widget.hintText,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: const BorderSide(width: 3.0),
+          ),
+          prefixIcon: Icon(widget.icon),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: widget.dropdownValue,
+            isDense: true,
+            onChanged: widget.onDropdownChanged,
+            items:
+                widget.dropdownItems!
+                    .map(
+                      (item) =>
+                          DropdownMenuItem(value: item, child: Text(item)),
+                    )
+                    .toList(),
+            dropdownColor: Colors.white,
+            menuMaxHeight: 200,
+          ),
+        ),
+      );
+    }
+
+    // 🔹 TextField Mode
     return TextFormField(
       controller: widget.controller,
       obscureText: widget.isPassword ? _obscureText : false,
@@ -37,7 +76,7 @@ class _AuthFieldState extends State<AuthField> {
         hintText: widget.hintText,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8.0),
-          borderSide: BorderSide(width: 3.0),
+          borderSide: const BorderSide(width: 3.0),
         ),
         prefixIcon: Icon(widget.icon),
         suffixIcon:
@@ -53,7 +92,7 @@ class _AuthFieldState extends State<AuthField> {
                   ),
                 )
                 : null,
-      ), //deco
+      ),
     );
   }
 }

@@ -19,7 +19,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
         {"no": 1, "qty": 2, "name": "Paneer Butter Masala", "price": 250},
         {"no": 2, "qty": 1, "name": "Garlic Naan", "price": 50},
       ],
-      'status': 'PAID',
+      'paymentStatus': 'PAID',
       'orderStatus': 'Pending',
       'time': '5:55',
     },
@@ -29,7 +29,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
       'items': [
         {"no": 1, "qty": 1, "name": "Veg Biryani", "price": 180},
       ],
-      'status': 'UNPAID',
+      'paymentStatus': 'UNPAID',
       'orderStatus': 'Delivered',
       'time': '7:77',
     },
@@ -40,7 +40,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
         {"no": 1, "qty": 9, "name": "Roti", "price": 18},
         {"no": 2, "qty": 2, "name": "Mixed Veg", "price": 80},
       ],
-      'status': 'PAID',
+      'paymentStatus': 'PAID',
       'orderStatus': 'Pending',
       'time': '4:10',
     },
@@ -156,14 +156,12 @@ class _AdminHomePageState extends State<AdminHomePage> {
                   final order = _filteredOrders[index];
 
                   return OrderWidget(
-                    orderNumber: order['orderNumber'] ?? (index + 1).toString(),
+                    orderNumber: order['orderNumber'] ?? '',
                     customerName: order['customerName'] ?? '',
-                    status: order['status']!,
+                    orderStatus: order['orderStatus'] ?? 'Pending',
+                    paymentStatus: order['status'] ?? 'Unpaid',
                     time: order['time'] ?? '',
-                    // Pass the bill data here
-                    items: List<Map<String, dynamic>>.from(
-                      order['items'] ?? [],
-                    ),
+                    items: order['items'] ?? [],
                   );
                 },
               ),

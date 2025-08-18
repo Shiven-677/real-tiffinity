@@ -1,12 +1,18 @@
-import 'dart:io';
 import 'package:Tiffinity/views/widgets/auth_field.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AddMenuItemPage extends StatefulWidget {
   final Map<String, dynamic>? existingItem; // optional for editing
+  final String messId; // ✅ required
+  final String? menuId; // ✅ optional for editing
 
-  const AddMenuItemPage({super.key, this.existingItem});
+  const AddMenuItemPage({
+    super.key,
+    required this.messId,
+    this.existingItem,
+    this.menuId,
+  });
 
   @override
   State<AddMenuItemPage> createState() => _AddMenuItemPageState();
@@ -17,34 +23,21 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
   final _priceController = TextEditingController();
   final _descriptionController = TextEditingController();
   String _type = "Veg";
-  File? _image;
 
   @override
   void initState() {
     super.initState();
 
-    // If editing, pre-fill the form
+    // Pre-fill when editing
     if (widget.existingItem != null) {
-      _nameController.text = widget.existingItem!['name'];
+      _nameController.text = widget.existingItem!['name'] ?? '';
       _priceController.text = widget.existingItem!['price'].toString();
       _descriptionController.text = widget.existingItem!['description'] ?? '';
-      _type = widget.existingItem!['type'];
-      _image = widget.existingItem!['image'] as File?;
+      _type = widget.existingItem!['type'] ?? "Veg";
     }
   }
 
-  Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-    );
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
-    }
-  }
-
-  void _saveItem() {
+  Future<void> _saveItem() async {
     if (_nameController.text.isEmpty ||
         _priceController.text.isEmpty ||
         _descriptionController.text.isEmpty) {
@@ -54,20 +47,47 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
       return;
     }
 
-    if (_image == null) {
+    try {
+      final menuItem = {
+        'name': _nameController.text,
+        'price': double.tryParse(_priceController.text) ?? 0,
+        'description': _descriptionController.text,
+        'type': _type,
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      final menuRef = FirebaseFirestore.instance
+          .collection('messes')
+          .doc(widget.messId)
+          .collection('menu');
+
+      if (widget.menuId != null) {
+        // ✅ update existing
+        await menuRef.doc(widget.menuId).update(menuItem);
+      } else {
+        // ✅ add new
+        await menuRef.add({
+          ...menuItem,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            widget.menuId != null
+                ? "Item updated successfully"
+                : "Item added successfully",
+          ),
+        ),
+      );
+
+      Navigator.pop(context, menuItem);
+    } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Please pick an image")));
-      return;
+      ).showSnackBar(SnackBar(content: Text("Error: $e")));
     }
-
-    Navigator.pop(context, {
-      'name': _nameController.text,
-      'price': double.tryParse(_priceController.text) ?? 0,
-      'description': _descriptionController.text,
-      'type': _type,
-      'image': _image,
-    });
   }
 
   @override
@@ -111,59 +131,22 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
                   title: const Text("Veg"),
                   value: "Veg",
                   groupValue: _type,
-                  onChanged: (value) {
-                    setState(() {
-                      _type = value!;
-                    });
-                  },
+                  onChanged: (value) => setState(() => _type = value!),
                 ),
                 RadioListTile<String>(
                   title: const Text("Non-Veg"),
                   value: "Non-Veg",
                   groupValue: _type,
-                  onChanged: (value) {
-                    setState(() {
-                      _type = value!;
-                    });
-                  },
+                  onChanged: (value) => setState(() => _type = value!),
                 ),
                 RadioListTile<String>(
                   title: const Text("Jain"),
                   value: "Jain",
                   groupValue: _type,
-                  onChanged: (value) {
-                    setState(() {
-                      _type = value!;
-                    });
-                  },
+                  onChanged: (value) => setState(() => _type = value!),
                 ),
               ],
             ),
-
-            const SizedBox(height: 16),
-
-            // Pick single image
-            Align(
-              alignment: Alignment.centerLeft,
-              child: FilledButton.tonalIcon(
-                onPressed: _pickImage,
-                icon: const Icon(Icons.image_outlined, size: 20),
-                label: const Text("Pick Image", style: TextStyle(fontSize: 14)),
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            if (_image != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.file(
-                  _image!,
-                  width: 120,
-                  height: 120,
-                  fit: BoxFit.cover,
-                ),
-              ),
 
             const SizedBox(height: 30),
 

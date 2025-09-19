@@ -1,4 +1,5 @@
 import 'package:Tiffinity/data/constants.dart';
+import 'package:Tiffinity/views/pages/customer_pages/customer_menu_page.dart';
 import 'package:flutter/material.dart';
 
 class CardWidget extends StatelessWidget {
@@ -9,6 +10,7 @@ class CardWidget extends StatelessWidget {
     required this.ratings, //for mess information
     required this.distance,
     required this.isVeg,
+    required this.messId,
   });
 
   final String title;
@@ -16,6 +18,7 @@ class CardWidget extends StatelessWidget {
   final String ratings;
   final String distance;
   final bool isVeg;
+  final String messId;
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +88,12 @@ class CardWidget extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      // Add your button action here
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MenuPage(messId: messId),
+                        ),
+                      );
                     },
                     child: const Text(
                       'View Menu & details',

@@ -1,76 +1,91 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:Tiffinity/views/widgets/card_widget.dart';
 
-class CustomerHomePage extends StatelessWidget {
+class CustomerHomePage extends StatefulWidget {
   const CustomerHomePage({super.key});
+
+  @override
+  State<CustomerHomePage> createState() => _CustomerHomePageState();
+}
+
+class _CustomerHomePageState extends State<CustomerHomePage> {
+  String searchQuery = "";
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
-      child: SingleChildScrollView(
-        child: Column(
-          children: [
-            TextField(
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-                hintText: 'Search for mess or tiffin services',
-                prefixIcon: Icon(Icons.search),
+      child: Column(
+        children: [
+          TextField(
+            decoration: InputDecoration(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10.0),
               ),
+              hintText: 'Search for mess or tiffin services',
+              prefixIcon: const Icon(Icons.search),
             ),
-            SizedBox(height: 8.0),
-            CardWidget(
-              title: 'Zoey kitchen',
-              description:
-                  'Specialized in south Indian cuisine, offering a variety of tiffin services.',
-              ratings: '4.5',
-              distance: '0.5',
-              isVeg: true, //for mess information
-            ),
+            onChanged: (value) {
+              setState(() {
+                searchQuery = value.toLowerCase();
+              });
+            },
+          ),
+          const SizedBox(height: 8.0),
 
-            CardWidget(
-              title: 'Krault Kitchen',
-              description: 'Specialized in gavti food and chana.',
-              ratings: '4.5',
-              distance: 'very far',
-              isVeg: true, //for mess information
-            ),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream:
+                  FirebaseFirestore.instance
+                      .collection('messes')
+                      .where('isOnline', isEqualTo: true)
+                      .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(
+                    child: Text("No messes online right now"),
+                  );
+                }
 
-            CardWidget(
-              title: 'Homey Meals',
-              description: 'Specialty in north Indian food.',
-              ratings: '4.2',
-              distance: '0.8',
-              isVeg: false, //for mess information
-            ),
+                final messes =
+                    snapshot.data!.docs.where((doc) {
+                      final mess = doc.data() as Map<String, dynamic>;
+                      final name =
+                          (mess['messName'] ?? '').toString().toLowerCase();
+                      final description =
+                          (mess['description'] ?? '').toString().toLowerCase();
 
-            CardWidget(
-              title: 'Annapurna Tiffins',
-              description: 'Specialized in authentic maharashtrian cuisine.',
-              ratings: '3.9',
-              distance: '1.2', //for mess information
-              isVeg: true,
-            ),
+                      return name.contains(searchQuery) ||
+                          description.contains(searchQuery);
+                    }).toList();
 
-            CardWidget(
-              title: 'rohit gay',
-              description: 'Suitable for bulk orders and meal prep.',
-              ratings: '4.8',
-              distance: '0.2', //for mess information
-              isVeg: true,
-            ),
+                if (messes.isEmpty) {
+                  return const Center(child: Text("No results found"));
+                }
 
-            CardWidget(
-              title: 'Tripura Mess',
-              description: 'Known for its traditional Bengali dishes.',
-              ratings: '4.5',
-              distance: '1.6', //for mess information
-              isVeg: false,
+                return ListView.builder(
+                  itemCount: messes.length,
+                  itemBuilder: (context, index) {
+                    final mess = messes[index].data() as Map<String, dynamic>;
+
+                    return CardWidget(
+                      title: mess['messName'] ?? 'Unnamed',
+                      description: mess['description'] ?? '',
+                      ratings: "4.5",
+                      distance: "1.0",
+                      isVeg: mess['messType']?.toLowerCase() == 'veg',
+                      messId: messes[index].id, // Pass the mess ID here
+                    );
+                  },
+                );
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:Tiffinity/data/notifiers.dart';
+import 'package:Tiffinity/data/constants.dart';
+
+// Import the order tracking page
+import 'order_tracking_page.dart';
 
 class MenuPage extends StatefulWidget {
   final String messId;
@@ -11,7 +15,8 @@ class MenuPage extends StatefulWidget {
 }
 
 class _MenuPageState extends State<MenuPage> {
-  int selectedTab = 0; // 0 = Menu, 1 = Cart
+  String selectedCategory = 'All';
+  String searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
@@ -34,145 +39,363 @@ class _MenuPageState extends State<MenuPage> {
         }
 
         return Scaffold(
-          appBar: AppBar(
-            backgroundColor: Colors.teal,
-            foregroundColor: Colors.white,
-            title: Text(messData['messName'] ?? 'Menu'),
-            actions: [
-              ValueListenableBuilder<Map<String, CartItem>>(
-                valueListenable: cartNotifier,
-                builder: (context, cart, _) {
-                  final itemCount = cart.values.fold(
-                    0,
-                    (sum, item) => sum + item.quantity,
-                  );
-                  return Stack(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.shopping_cart),
-                        onPressed: () {
-                          setState(() {
-                            selectedTab = 1; // Switch to cart tab
-                          });
-                        },
-                      ),
-                      if (itemCount > 0)
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              color: Colors.red,
-                              borderRadius: BorderRadius.circular(10),
+          body: CustomScrollView(
+            slivers: [
+              // Hero Image Header
+              SliverAppBar(
+                expandedHeight: 250,
+                pinned: true,
+                backgroundColor: const Color.fromARGB(255, 27, 84, 78),
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                actions: [
+                  ValueListenableBuilder<Map<String, CartItem>>(
+                    valueListenable: cartNotifier,
+                    builder: (context, cart, _) {
+                      final itemCount = cart.values.fold<int>(
+                        0,
+                        (sum, item) => sum + item.quantity,
+                      );
+                      return Stack(
+                        children: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.shopping_cart,
+                              color: Colors.white,
                             ),
-                            constraints: const BoxConstraints(
-                              minWidth: 16,
-                              minHeight: 16,
-                            ),
-                            child: Text(
-                              '$itemCount',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
+                            onPressed: () => _showCartBottomSheet(context),
+                          ),
+                          if (itemCount > 0)
+                            Positioned(
+                              right: 8,
+                              top: 8,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 16,
+                                  minHeight: 16,
+                                ),
+                                child: Text(
+                                  '$itemCount',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
-                              textAlign: TextAlign.center,
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.favorite_border,
+                      color: Colors.white,
+                    ),
+                    onPressed: () {},
+                  ),
+                ],
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          const Color.fromARGB(255, 27, 84, 78),
+                          const Color.fromARGB(
+                            255,
+                            27,
+                            84,
+                            78,
+                          ).withOpacity(0.7),
+                        ],
+                      ),
+                    ),
+                    child: Stack(
+                      children: [
+                        // Background placeholder
+                        Container(
+                          color: const Color.fromARGB(
+                            255,
+                            27,
+                            84,
+                            78,
+                          ).withOpacity(0.8),
+                          child: const Center(
+                            child: Icon(
+                              Icons.restaurant_menu,
+                              size: 80,
+                              color: Colors.white54,
                             ),
                           ),
                         ),
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
-          body: Column(
-            children: [
-              // Mess Info Section
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.teal.shade50,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.shade200,
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      messData['messName'] ?? '',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.teal,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on,
-                          size: 16,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            messData['address'] ?? 'Address not available',
-                            style: const TextStyle(color: Colors.grey),
+                        // Gradient overlay
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.black.withOpacity(0.3),
+                                Colors.black.withOpacity(0.7),
+                              ],
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    if (messData['description'] != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        messData['description'],
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
               ),
-              // Tab Content
-              Expanded(
-                child:
-                    selectedTab == 0
-                        ? _buildMenuList(messData)
-                        : _buildCartPage(),
+              // Mess Info Section
+              SliverToBoxAdapter(
+                child: Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Mess Name
+                      Text(
+                        messData['messName']?.toString() ?? 'Restaurant Name',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      // Mess Type
+                      Text(
+                        messData['messType']?.toString() ?? 'Cuisine Type',
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                      ),
+                      const SizedBox(height: 8),
+                      // Rating and timing row
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.star, color: Colors.white, size: 14),
+                                SizedBox(width: 2),
+                                Text(
+                                  '4.2',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.access_time,
+                                size: 16,
+                                color: Colors.grey[600],
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Open • Closes 10:30 PM',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      // Distance and delivery time
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            size: 16,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '1.50 km',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Icon(
+                            Icons.access_time,
+                            size: 16,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '28 mins',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
+              // Search and Filter Section
+              SliverToBoxAdapter(
+                child: Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: Row(
+                    children: [
+                      // Search Bar
+                      Expanded(
+                        child: Container(
+                          height: 45,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: TextField(
+                            onChanged: (value) {
+                              setState(() {
+                                searchQuery = value.toLowerCase();
+                              });
+                            },
+                            decoration: InputDecoration(
+                              hintText: 'Search menu items...',
+                              hintStyle: TextStyle(color: Colors.grey[500]),
+                              prefixIcon: Icon(
+                                Icons.search,
+                                color: Colors.grey[500],
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Filter Button
+                      Container(
+                        height: 45,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.tune, color: Colors.grey[600], size: 20),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Filter',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.keyboard_arrow_down,
+                              color: Colors.grey[600],
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Menu Items
+              _buildMenuSections(),
             ],
           ),
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: selectedTab,
-            onDestinationSelected: (value) {
-              setState(() {
-                selectedTab = value;
-              });
+          // Floating Cart Button
+          floatingActionButton: ValueListenableBuilder<Map<String, CartItem>>(
+            valueListenable: cartNotifier,
+            builder: (context, cart, _) {
+              if (cart.isEmpty) return const SizedBox.shrink();
+
+              final itemCount = cart.values.fold<int>(
+                0,
+                (sum, item) => sum + item.quantity,
+              );
+              final totalAmount = cart.values.fold<double>(
+                0.0,
+                (sum, item) => sum + item.totalPrice,
+              );
+
+              return Container(
+                width: double.infinity,
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                child: FloatingActionButton.extended(
+                  onPressed: () => _showCartBottomSheet(context),
+                  backgroundColor: const Color.fromARGB(255, 27, 84, 78),
+                  label: SizedBox(
+                    width: MediaQuery.of(context).size.width - 60,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '$itemCount items | ₹${totalAmount.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Text(
+                          'VIEW CART',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
             },
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.restaurant_menu),
-                label: 'Menu',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.shopping_cart),
-                label: 'Cart',
-              ),
-            ],
           ),
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerFloat,
         );
       },
     );
   }
 
-  Widget _buildMenuList(Map<String, dynamic> messData) {
+  Widget _buildMenuSections() {
     return StreamBuilder<QuerySnapshot>(
       stream:
           FirebaseFirestore.instance
@@ -183,389 +406,372 @@ class _MenuPageState extends State<MenuPage> {
               .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return const SliverToBoxAdapter(
+            child: Center(child: CircularProgressIndicator()),
+          );
         }
 
         if (snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text("No menu items available"));
+          return const SliverToBoxAdapter(
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.all(50),
+                child: Text("No menu items available"),
+              ),
+            ),
+          );
         }
 
-        final menuItems = snapshot.data!.docs;
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: menuItems.length,
-          itemBuilder: (context, index) {
-            final doc = menuItems[index];
-            final data = doc.data() as Map<String, dynamic>;
-            return _buildMenuItem(doc.id, data, messData);
-          },
+        // Filter items based on search
+        final allItems =
+            snapshot.data!.docs.where((doc) {
+              if (searchQuery.isEmpty) return true;
+              final data = doc.data() as Map<String, dynamic>;
+              final name = data['name']?.toString().toLowerCase() ?? '';
+              return name.contains(searchQuery);
+            }).toList();
+
+        // Group items by category
+        final groupedItems = <String, List<DocumentSnapshot>>{};
+
+        for (final doc in allItems) {
+          final data = doc.data() as Map<String, dynamic>;
+          final category = data['category']?.toString() ?? 'Main Course';
+
+          if (!groupedItems.containsKey(category)) {
+            groupedItems[category] = [];
+          }
+          groupedItems[category]!.add(doc);
+        }
+
+        if (groupedItems.isEmpty) {
+          return const SliverToBoxAdapter(
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.all(50),
+                child: Text("No items match your search"),
+              ),
+            ),
+          );
+        }
+
+        return SliverList(
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final categories = groupedItems.keys.toList();
+            final category = categories[index];
+            final categoryItems = groupedItems[category]!;
+
+            return Container(
+              color: Colors.white,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Category Header
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+                    child: Text(
+                      category,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  // Category Items
+                  ...categoryItems.map((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    return _buildMenuItem(doc.id, data);
+                  }).toList(),
+                ],
+              ),
+            );
+          }, childCount: groupedItems.length),
         );
       },
     );
   }
 
-  Widget _buildMenuItem(
-    String itemId,
-    Map<String, dynamic> data,
-    Map<String, dynamic> messData,
-  ) {
+  Widget _buildMenuItem(String itemId, Map<String, dynamic> data) {
     return ValueListenableBuilder<Map<String, CartItem>>(
       valueListenable: cartNotifier,
       builder: (context, cart, _) {
         final cartItem = cart[itemId];
         final quantity = cartItem?.quantity ?? 0;
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          elevation: 3,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+        return Container(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: Colors.grey[200]!, width: 0.5),
+            ),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                // Item Type Icon
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: _getItemTypeColor(data['type']).withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    _getItemTypeIcon(data['type']),
-                    color: _getItemTypeColor(data['type']),
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                // Item Details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        data['name'] ?? 'Unknown Item',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Veg/Non-veg symbol
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child:
+                    data['type']?.toString() == 'Veg'
+                        ? Symbols.vegSymbol
+                        : Symbols.nonVegSymbol,
+              ),
+              const SizedBox(width: 12),
+              // Item Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Item Name
+                    Text(
+                      data['name']?.toString() ?? 'Unknown Item',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
                       ),
-                      if (data['description'] != null &&
-                          data['description'].toString().isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          data['description'],
+                    ),
+                    const SizedBox(height: 4),
+                    // Price
+                    Text(
+                      '₹ ${_getPrice(data['price'])}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Description
+                    if (data['description'] != null &&
+                        data['description'].toString().isNotEmpty) ...[
+                      Text(
+                        data['description'].toString(),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      GestureDetector(
+                        onTap: () {
+                          // Show full description
+                        },
+                        child: const Text(
+                          'read more',
                           style: TextStyle(
-                            color: Colors.grey.shade600,
-                            fontSize: 14,
+                            color: Color.fromARGB(255, 27, 84, 78),
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                      ],
-                      const SizedBox(height: 8),
-                      Text(
-                        '₹${data['price'] ?? 0}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Colors.green,
-                        ),
                       ),
+                      const SizedBox(height: 12),
                     ],
-                  ),
-                ),
-                // Quantity Controls
-                if (quantity > 0) ...[
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.teal,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          onPressed: () => _removeFromCart(itemId),
-                          icon: const Icon(Icons.remove, color: Colors.white),
-                          constraints: const BoxConstraints(
-                            minWidth: 32,
-                            minHeight: 32,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Text(
-                            '$quantity',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => _addToCart(itemId, data, messData),
-                          icon: const Icon(Icons.add, color: Colors.white),
-                          constraints: const BoxConstraints(
-                            minWidth: 32,
-                            minHeight: 32,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ] else ...[
-                  ElevatedButton(
-                    onPressed: () => _addToCart(itemId, data, messData),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'Add',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildCartPage() {
-    return ValueListenableBuilder<Map<String, CartItem>>(
-      valueListenable: cartNotifier,
-      builder: (context, cart, _) {
-        if (cart.isEmpty) {
-          return const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.shopping_cart_outlined,
-                  size: 64,
-                  color: Colors.grey,
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'Your cart is empty',
-                  style: TextStyle(fontSize: 18, color: Colors.grey),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Add items from the menu to get started',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ],
-            ),
-          );
-        }
-
-        final cartItems = cart.values.toList();
-        final totalAmount = cartItems.fold(
-          0.0,
-          (sum, item) => sum + item.totalPrice,
-        );
-
-        return Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: cartItems.length,
-                itemBuilder: (context, index) {
-                  final item = cartItems[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
+                    // Add/Quantity Button
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child:
+                          quantity > 0
+                              ? Container(
+                                decoration: BoxDecoration(
+                                  color: const Color.fromARGB(255, 27, 84, 78),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '₹${item.price} × ${item.quantity}',
-                                  style: TextStyle(color: Colors.grey.shade600),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      onPressed: () => _removeFromCart(itemId),
+                                      icon: const Icon(
+                                        Icons.remove,
+                                        color: Colors.white,
+                                        size: 18,
+                                      ),
+                                      constraints: const BoxConstraints(
+                                        minWidth: 35,
+                                        minHeight: 35,
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                      ),
+                                      child: Text(
+                                        '$quantity',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      onPressed: () => _addToCart(itemId, data),
+                                      icon: const Icon(
+                                        Icons.add,
+                                        color: Colors.white,
+                                        size: 18,
+                                      ),
+                                      constraints: const BoxConstraints(
+                                        minWidth: 35,
+                                        minHeight: 35,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ),
-                          Text(
-                            '₹${item.totalPrice.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Colors.green,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.teal,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  onPressed: () => _removeFromCart(item.id),
-                                  icon: const Icon(
-                                    Icons.remove,
-                                    color: Colors.white,
+                              )
+                              : Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: const Color.fromARGB(
+                                      255,
+                                      27,
+                                      84,
+                                      78,
+                                    ),
                                   ),
-                                  constraints: const BoxConstraints(
-                                    minWidth: 28,
-                                    minHeight: 28,
-                                  ),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                  ),
-                                  child: Text(
-                                    '${item.quantity}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () => _addToCart(itemId, data),
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 20,
+                                        vertical: 8,
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            'ADD',
+                                            style: TextStyle(
+                                              color: Color.fromARGB(
+                                                255,
+                                                27,
+                                                84,
+                                                78,
+                                              ),
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          SizedBox(width: 4),
+                                          Icon(
+                                            Icons.add,
+                                            color: Color.fromARGB(
+                                              255,
+                                              27,
+                                              84,
+                                              78,
+                                            ),
+                                            size: 16,
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
-                                IconButton(
-                                  onPressed:
-                                      () => _addToCart(
-                                        item.id,
-                                        {
-                                          'name': item.name,
-                                          'price': item.price,
-                                        },
-                                        {'messName': item.messName},
-                                      ),
-                                  icon: const Icon(
-                                    Icons.add,
-                                    color: Colors.white,
-                                  ),
-                                  constraints: const BoxConstraints(
-                                    minWidth: 28,
-                                    minHeight: 28,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                              ),
                     ),
-                  );
-                },
+                  ],
+                ),
               ),
-            ),
-            // Checkout Section
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.shade300,
-                    blurRadius: 4,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
+              const SizedBox(width: 12),
+              // Food Image placeholder
+              Container(
+                width: 100,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.restaurant,
+                  color: Colors.grey[400],
+                  size: 40,
+                ),
               ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Total Amount:',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        '₹${totalAmount.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => _checkout(totalAmount),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.teal,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Text(
-                        'Checkout (${cartItems.length} items)',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
   }
 
-  void _addToCart(
-    String itemId,
-    Map<String, dynamic> itemData,
-    Map<String, dynamic> messData,
-  ) {
-    final cart = Map<String, CartItem>.from(cartNotifier.value);
-
-    if (cart.containsKey(itemId)) {
-      cart[itemId]!.quantity++;
-    } else {
-      cart[itemId] = CartItem(
-        id: itemId,
-        name: itemData['name'] ?? 'Unknown',
-        price: (itemData['price'] ?? 0).toDouble(),
-        messId: widget.messId,
-        messName: messData['messName'] ?? 'Unknown Mess',
-      );
+  String _getPrice(dynamic price) {
+    if (price == null) return '0';
+    if (price is String) {
+      return price;
+    } else if (price is int || price is double) {
+      return price.toString();
     }
+    return '0';
+  }
 
-    cartNotifier.value = cart;
+  double _getPriceAsDouble(dynamic price) {
+    if (price == null) return 0.0;
+    if (price is String) {
+      return double.tryParse(price) ?? 0.0;
+    } else if (price is int) {
+      return price.toDouble();
+    } else if (price is double) {
+      return price;
+    }
+    return 0.0;
+  }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${itemData['name']} added to cart'),
-        duration: const Duration(seconds: 1),
-      ),
-    );
+  void _addToCart(String itemId, Map<String, dynamic> itemData) async {
+    try {
+      final messDoc =
+          await FirebaseFirestore.instance
+              .collection('messes')
+              .doc(widget.messId)
+              .get();
+      final messData = messDoc.data() as Map<String, dynamic>?;
+
+      final cart = Map<String, CartItem>.from(cartNotifier.value);
+
+      if (cart.containsKey(itemId)) {
+        cart[itemId]!.quantity++;
+      } else {
+        cart[itemId] = CartItem(
+          id: itemId,
+          name: itemData['name']?.toString() ?? 'Unknown',
+          price: _getPriceAsDouble(itemData['price']),
+          messId: widget.messId,
+          messName: messData?['messName']?.toString() ?? 'Unknown Mess',
+        );
+      }
+
+      cartNotifier.value = cart;
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${itemData['name']?.toString() ?? 'Item'} added to cart',
+            ),
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error adding to cart: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error adding item to cart'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _removeFromCart(String itemId) {
@@ -581,75 +787,275 @@ class _MenuPageState extends State<MenuPage> {
     }
   }
 
-  void _checkout(double totalAmount) {
-    showDialog(
+  void _showCartBottomSheet(BuildContext context) {
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder:
-          (context) => AlertDialog(
-            title: const Text('Checkout'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Total Amount: ₹${totalAmount.toStringAsFixed(2)}'),
-                const SizedBox(height: 16),
-                const Text(
-                  'Order will be processed and you will receive confirmation shortly.',
-                ),
-              ],
+          (context) => Container(
+            height: MediaQuery.of(context).size.height * 0.7,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  // Clear cart after successful checkout
-                  cartNotifier.value = {};
-                  Navigator.pop(context);
-                  Navigator.pop(context); // Go back to home
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Order placed successfully!'),
-                      backgroundColor: Colors.green,
+            child: ValueListenableBuilder<Map<String, CartItem>>(
+              valueListenable: cartNotifier,
+              builder: (context, cart, _) {
+                if (cart.isEmpty) {
+                  return const Center(child: Text('Your cart is empty'));
+                }
+
+                final cartItems = cart.values.toList();
+                final totalAmount = cartItems.fold<double>(
+                  0.0,
+                  (sum, item) => sum + item.totalPrice,
+                );
+
+                return Column(
+                  children: [
+                    // Handle
+                    Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-                child: const Text(
-                  'Confirm Order',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ],
+                    // Header
+                    const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Text(
+                        'Your Cart',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    // Cart Items
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: cartItems.length,
+                        itemBuilder: (context, index) {
+                          final item = cartItems[index];
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey[200]!),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.name,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '₹${item.price.toStringAsFixed(0)} × ${item.quantity}',
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  '₹${item.totalPrice.toStringAsFixed(0)}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    // Checkout Section
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.shade300,
+                            blurRadius: 4,
+                            offset: const Offset(0, -2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Total Amount:',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                '₹${totalAmount.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color.fromARGB(255, 27, 84, 78),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () => _checkout(totalAmount),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color.fromARGB(
+                                  255,
+                                  27,
+                                  84,
+                                  78,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text(
+                                'PROCEED TO CHECKOUT',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
     );
   }
 
-  Color _getItemTypeColor(String? type) {
-    switch (type) {
-      case 'Veg':
-        return Colors.green;
-      case 'Non-Veg':
-        return Colors.red;
-      case 'Jain':
-        return Colors.orange;
-      default:
-        return Colors.grey;
-    }
-  }
+  void _checkout(double totalAmount) async {
+    try {
+      final messDoc =
+          await FirebaseFirestore.instance
+              .collection('messes')
+              .doc(widget.messId)
+              .get();
+      final messData = messDoc.data() as Map<String, dynamic>?;
 
-  IconData _getItemTypeIcon(String? type) {
-    switch (type) {
-      case 'Veg':
-        return Icons.eco;
-      case 'Non-Veg':
-        return Icons.lunch_dining;
-      case 'Jain':
-        return Icons.self_improvement;
-      default:
-        return Icons.restaurant;
+      // Generate order data
+      final orderItems =
+          cartNotifier.value.values.map((item) {
+            return {
+              'name': item.name,
+              'quantity': item.quantity,
+              'price': item.price,
+              'type': 'Veg', // You can determine this from your item data
+            };
+          }).toList();
+
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: const Text('Order Confirmation'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Total Amount: ₹${totalAmount.toStringAsFixed(0)}'),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Your order will be processed and you will receive confirmation shortly.',
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    // Clear cart
+                    cartNotifier.value = {};
+
+                    // Close dialogs and menu page
+                    Navigator.pop(context); // Close dialog
+                    Navigator.pop(context); // Close cart bottom sheet
+                    Navigator.pop(context); // Close menu page
+
+                    // Navigate to order tracking
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => OrderTrackingPage(
+                              orderId:
+                                  'TIF${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
+                              orderItems: orderItems,
+                              totalAmount: totalAmount,
+                              messName:
+                                  messData?['messName']?.toString() ??
+                                  'Restaurant',
+                              messAddress:
+                                  messData?['address']?.toString() ??
+                                  'Address not available',
+                            ),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 27, 84, 78),
+                  ),
+                  child: const Text(
+                    'Confirm Order',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+      );
+    } catch (e) {
+      print('Error during checkout: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error processing order. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 }

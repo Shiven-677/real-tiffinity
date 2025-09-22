@@ -10,10 +10,14 @@ class CustomerNavbarWidget extends StatelessWidget {
       valueListenable: customerSelectedPageNotifier,
       builder: (context, selectedPage, child) {
         return NavigationBar(
-          destinations: [
+          destinations: const [
             NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
+            NavigationDestination(
+              icon: Icon(Icons.receipt_long),
+              label: 'Orders',
+            ),
             NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
-          ], //total 2 items
+          ], // Now 3 items
           onDestinationSelected: (int value) {
             customerSelectedPageNotifier.value = value;
           },

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:Tiffinity/data/notifiers.dart';
@@ -966,6 +967,17 @@ class _MenuPageState extends State<MenuPage> {
 
   void _checkout(double totalAmount) async {
     try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please login to place order'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
       final messDoc =
           await FirebaseFirestore.instance
               .collection('messes')
@@ -973,79 +985,65 @@ class _MenuPageState extends State<MenuPage> {
               .get();
       final messData = messDoc.data() as Map<String, dynamic>?;
 
-      // Generate order data
       final orderItems =
           cartNotifier.value.values.map((item) {
             return {
               'name': item.name,
               'quantity': item.quantity,
               'price': item.price,
-              'type': 'Veg', // You can determine this from your item data
+              'itemId': item.id,
             };
           }).toList();
 
-      showDialog(
-        context: context,
-        builder:
-            (context) => AlertDialog(
-              title: const Text('Order Confirmation'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Total Amount: ₹${totalAmount.toStringAsFixed(0)}'),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Your order will be processed and you will receive confirmation shortly.',
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    // Clear cart
-                    cartNotifier.value = {};
+      final orderId =
+          'TIF${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}';
 
-                    // Close dialogs and menu page
-                    Navigator.pop(context); // Close dialog
-                    Navigator.pop(context); // Close cart bottom sheet
-                    Navigator.pop(context); // Close menu page
+      await FirebaseFirestore.instance.collection('orders').add({
+        'orderId': orderId,
+        'messId': widget.messId,
+        'messName': messData?['messName'] ?? 'Unknown Mess',
+        'messAddress': messData?['address'] ?? 'Address not available',
+        'customerId': currentUser.uid,
+        'customerEmail': currentUser.email,
+        'items': orderItems,
+        'totalAmount': totalAmount,
+        'status': 'Pending',
+        'paymentStatus': 'Unpaid',
+        'orderTime': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
+        'isActive': true,
+      });
 
-                    // Navigate to order tracking
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => OrderTrackingPage(
-                              orderId:
-                                  'TIF${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
-                              orderItems: orderItems,
-                              totalAmount: totalAmount,
-                              messName:
-                                  messData?['messName']?.toString() ??
-                                  'Restaurant',
-                              messAddress:
-                                  messData?['address']?.toString() ??
-                                  'Address not available',
-                            ),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 27, 84, 78),
-                  ),
-                  child: const Text(
-                    'Confirm Order',
-                    style: TextStyle(color: Colors.white),
-                  ),
+      cartNotifier.value = {};
+
+      if (mounted) {
+        Navigator.pop(context); // Close cart bottom sheet
+        Navigator.pop(context); // Close menu page
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Order placed successfully! Order ID: $orderId'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => OrderTrackingPage(
+                  orderId: orderId,
+                  orderItems: orderItems.cast<Map<String, dynamic>>(),
+                  totalAmount: totalAmount,
+                  messName: messData?['messName']?.toString() ?? 'Restaurant',
+                  messAddress:
+                      messData?['address']?.toString() ??
+                      'Address not available',
                 ),
-              ],
-            ),
-      );
+          ),
+        );
+      }
     } catch (e) {
       print('Error during checkout: $e');
       if (mounted) {

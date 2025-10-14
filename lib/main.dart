@@ -3,6 +3,7 @@ import 'package:Tiffinity/data/notifiers.dart';
 import 'package:Tiffinity/views/auth/welcome_page.dart';
 import 'package:Tiffinity/views/pages/admin_pages/admin_widget_tree.dart';
 import 'package:Tiffinity/views/pages/customer_pages/customer_widget_tree.dart';
+import 'package:Tiffinity/services/notification_service.dart'; // 🔔 ADD THIS
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -12,6 +13,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // 🔔 Initialize notification service
+  await NotificationService().initialize();
+
   runApp(const MyApp());
 }
 
@@ -37,7 +42,6 @@ class _MyAppState extends State<MyApp> {
 
   Future<Widget> _decideStartPage() async {
     User? user = FirebaseAuth.instance.currentUser;
-
     if (user != null) {
       // Fetch role from Firestore
       DocumentSnapshot userDoc =
@@ -45,7 +49,6 @@ class _MyAppState extends State<MyApp> {
               .collection('users')
               .doc(user.uid)
               .get();
-
       if (userDoc.exists && userDoc['role'] != null) {
         String role = userDoc['role'];
         if (role == 'customer') {
@@ -55,7 +58,6 @@ class _MyAppState extends State<MyApp> {
         }
       }
     }
-
     // Default if not logged in or role not found
     return const WelcomePage();
   }
@@ -73,7 +75,7 @@ class _MyAppState extends State<MyApp> {
               brightness: isDarkMode ? Brightness.dark : Brightness.light,
             ),
           ),
-          home: FutureBuilder<Widget>(
+          home: FutureBuilder(
             future: _decideStartPage(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:Tiffinity/data/notifiers.dart';
 import 'package:Tiffinity/data/constants.dart';
+import 'package:Tiffinity/services/notification_service.dart';
 
 // Import the order tracking page
 import 'order_tracking_page.dart';
@@ -978,12 +979,40 @@ class _MenuPageState extends State<MenuPage> {
         return;
       }
 
+      // Validate mess is still online
       final messDoc =
           await FirebaseFirestore.instance
               .collection('messes')
               .doc(widget.messId)
               .get();
-      final messData = messDoc.data() as Map<String, dynamic>?;
+
+      final messData = messDoc.data() as Map?;
+
+      if (messData == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Mess not found'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Check if mess is currently online
+      if (messData['isOnline'] != true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Sorry, this mess is currently offline and not accepting orders',
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+        Navigator.pop(context); // Close cart bottom sheet
+        Navigator.pop(context); // Close menu page
+        return;
+      }
 
       final orderItems =
           cartNotifier.value.values.map((item) {
@@ -998,11 +1027,13 @@ class _MenuPageState extends State<MenuPage> {
       final orderId =
           'TIF${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}';
 
+      // Create order with mess owner ID for notifications
       await FirebaseFirestore.instance.collection('orders').add({
         'orderId': orderId,
         'messId': widget.messId,
-        'messName': messData?['messName'] ?? 'Unknown Mess',
-        'messAddress': messData?['address'] ?? 'Address not available',
+        'messName': messData['messName'] ?? 'Unknown Mess',
+        'messAddress': messData['address'] ?? 'Address not available',
+        'messOwnerId': messData['ownerId'], // Add owner ID for notifications
         'customerId': currentUser.uid,
         'customerEmail': currentUser.email,
         'items': orderItems,
@@ -1014,12 +1045,19 @@ class _MenuPageState extends State<MenuPage> {
         'isActive': true,
       });
 
+      // 🔔 Send notification to mess owner
+      await NotificationService().sendOrderNotificationToMess(
+        messId: widget.messId,
+        orderId: orderId,
+        customerEmail: currentUser.email ?? 'Customer',
+        totalAmount: totalAmount,
+      );
+
       cartNotifier.value = {};
 
       if (mounted) {
         Navigator.pop(context); // Close cart bottom sheet
         Navigator.pop(context); // Close menu page
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Order placed successfully! Order ID: $orderId'),
@@ -1027,7 +1065,6 @@ class _MenuPageState extends State<MenuPage> {
             duration: const Duration(seconds: 3),
           ),
         );
-
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -1036,9 +1073,9 @@ class _MenuPageState extends State<MenuPage> {
                   orderId: orderId,
                   orderItems: orderItems.cast<Map<String, dynamic>>(),
                   totalAmount: totalAmount,
-                  messName: messData?['messName']?.toString() ?? 'Restaurant',
+                  messName: messData['messName']?.toString() ?? 'Restaurant',
                   messAddress:
-                      messData?['address']?.toString() ??
+                      messData['address']?.toString() ??
                       'Address not available',
                 ),
           ),

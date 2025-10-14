@@ -9,9 +9,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:Tiffinity/views/pages/admin_pages/menu_management_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:Tiffinity/services/notification_service.dart'; // 🔔 ADD THIS
 
-class AdminWidgetTree extends StatelessWidget {
+class AdminWidgetTree extends StatefulWidget {
   const AdminWidgetTree({super.key});
+
+  @override
+  State<AdminWidgetTree> createState() => _AdminWidgetTreeState();
+}
+
+class _AdminWidgetTreeState extends State<AdminWidgetTree> {
+  @override
+  void initState() {
+    super.initState();
+    // 🔔 Save FCM token for this mess owner to receive notifications
+    NotificationService().saveTokenToFirestore();
+  }
 
   Future<void> _toggleOnlineStatus(String uid, bool status) async {
     await FirebaseFirestore.instance.collection('messes').doc(uid).update({
@@ -22,7 +35,6 @@ class AdminWidgetTree extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String uid = FirebaseAuth.instance.currentUser!.uid;
-
     final List<Widget> pages = [
       AdminHomePage(),
       MenuManagementPage(),
@@ -51,7 +63,6 @@ class AdminWidgetTree extends StatelessWidget {
               );
             },
           ),
-
           // 🔹 Theme toggle
           IconButton(
             onPressed: () async {
@@ -70,7 +81,6 @@ class AdminWidgetTree extends StatelessWidget {
               },
             ),
           ),
-
           // 🔹 Settings button
           IconButton(
             onPressed: () {
@@ -87,14 +97,12 @@ class AdminWidgetTree extends StatelessWidget {
           ),
         ],
       ),
-
       body: ValueListenableBuilder(
         valueListenable: adminSelectedPageNotifier,
         builder: (context, selectedPage, child) {
           return pages.elementAt(selectedPage);
         },
       ),
-
       bottomNavigationBar: AdminNavbarWidget(),
     );
   }

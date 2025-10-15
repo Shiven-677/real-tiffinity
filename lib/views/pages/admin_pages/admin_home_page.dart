@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:Tiffinity/views/widgets/order_widget.dart';
+import 'package:Tiffinity/views/pages/admin_pages/order_details_page.dart';
 import 'package:Tiffinity/views/widgets/summary_card.dart';
 import 'package:Tiffinity/views/widgets/search_filter_bar.dart';
 
@@ -16,6 +16,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
   String? _messId;
   String _selectedStatus = "All";
   String _searchQuery = "";
+  Map<String, String> _customerNames = {};
 
   @override
   void initState() {
@@ -40,6 +41,40 @@ class _AdminHomePageState extends State<AdminHomePage> {
       }
     } catch (e) {
       debugPrint('Error fetching mess ID: $e');
+    }
+  }
+
+  Future<String> _fetchCustomerName(String customerId) async {
+    if (_customerNames.containsKey(customerId)) {
+      return _customerNames[customerId]!;
+    }
+
+    try {
+      final userDoc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(customerId)
+              .get();
+
+      if (userDoc.exists) {
+        final name = userDoc.data()?['name'] ?? 'Customer';
+        _customerNames[customerId] = name;
+        return name;
+      }
+    } catch (e) {
+      debugPrint('Error fetching customer name: $e');
+    }
+
+    return 'Customer';
+  }
+
+  Future<void> _toggleOnlineStatus(bool status) async {
+    try {
+      await FirebaseFirestore.instance.collection('messes').doc(_messId).update(
+        {'isOnline': status},
+      );
+    } catch (e) {
+      debugPrint('Error toggling status: $e');
     }
   }
 
@@ -79,18 +114,10 @@ class _AdminHomePageState extends State<AdminHomePage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.local_shipping),
-              title: const Text("Being Prepared"),
-              onTap: () {
-                _applyFilter("Being Prepared");
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
               leading: const Icon(Icons.check_circle),
-              title: const Text("Delivered"),
+              title: const Text("Completed"),
               onTap: () {
-                _applyFilter("Delivered");
+                _applyFilter("Completed");
                 Navigator.pop(context);
               },
             ),
@@ -111,7 +138,94 @@ class _AdminHomePageState extends State<AdminHomePage> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Summary Card with real-time data
+              // Mess Status Section
+              StreamBuilder<DocumentSnapshot>(
+                stream:
+                    FirebaseFirestore.instance
+                        .collection('messes')
+                        .doc(_messId)
+                        .snapshots(),
+                builder: (context, snapshot) {
+                  bool isOnline = snapshot.data?['isOnline'] ?? false;
+
+                  return Container(
+                    margin: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors:
+                            isOnline
+                                ? [Colors.green.shade400, Colors.green.shade600]
+                                : [Colors.red.shade400, Colors.red.shade600],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color:
+                              isOnline
+                                  ? Colors.green.withOpacity(0.3)
+                                  : Colors.red.withOpacity(0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.3),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isOnline ? Icons.store : Icons.store_mall_directory,
+                            color: Colors.white,
+                            size: 32,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isOnline ? "Mess Open" : "Mess Closed",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                isOnline
+                                    ? "Orders are receivable"
+                                    : "Orders are stopped",
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: isOnline,
+                          onChanged: _toggleOnlineStatus,
+                          activeColor: Colors.white,
+                          activeTrackColor: Colors.green.shade300,
+                          inactiveThumbColor: Colors.white,
+                          inactiveTrackColor: Colors.red.shade300,
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+              // Summary Card
               StreamBuilder<QuerySnapshot>(
                 stream:
                     FirebaseFirestore.instance
@@ -135,7 +249,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                             (doc) =>
                                 (doc.data()
                                     as Map<String, dynamic>)['status'] ==
-                                'Delivered',
+                                'Completed',
                           )
                           .length;
                   final pending =
@@ -156,14 +270,12 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 },
               ),
               const SizedBox(height: 16),
-
               SearchFilterBar(
                 onSearchChanged: _filterOrders,
                 onFilterPressed: _showFilterOptions,
               ),
               const SizedBox(height: 10),
-
-              // Real-time orders from Firebase
+              // Orders List
               StreamBuilder<QuerySnapshot>(
                 stream:
                     FirebaseFirestore.instance
@@ -207,7 +319,6 @@ class _AdminHomePageState extends State<AdminHomePage> {
                     );
                   }
 
-                  // Apply filters
                   final filteredOrders =
                       snapshot.data!.docs.where((doc) {
                         final order = doc.data() as Map<String, dynamic>;
@@ -221,6 +332,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                                 .contains(_searchQuery.toLowerCase()) ||
                             (order['orderId']?.toString().toLowerCase() ?? '')
                                 .contains(_searchQuery.toLowerCase());
+
                         return matchesStatus && matchesSearch;
                       }).toList();
 
@@ -252,15 +364,133 @@ class _AdminHomePageState extends State<AdminHomePage> {
                             '${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
                       }
 
-                      return OrderWidget(
-                        orderNumber: order['orderId'] ?? '',
-                        customerName: order['customerEmail'] ?? 'Customer',
-                        orderStatus: order['status'] ?? 'Pending',
-                        paymentStatus: order['paymentStatus'] ?? 'Unpaid',
-                        time: formattedTime,
-                        items: List<Map<String, dynamic>>.from(
-                          order['items'] ?? [],
-                        ),
+                      final status = order['status'] ?? 'Pending';
+                      final customerId = order['customerId'];
+
+                      return FutureBuilder<String>(
+                        future: _fetchCustomerName(customerId),
+                        builder: (context, nameSnapshot) {
+                          final customerName =
+                              nameSnapshot.data ?? 'Loading...';
+
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => OrderDetailsPage(
+                                        orderId: orderDoc.id,
+                                        orderData: order,
+                                      ),
+                                ),
+                              );
+                            },
+                            child: Card(
+                              margin: const EdgeInsets.symmetric(
+                                vertical: 8,
+                                horizontal: 16,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 3,
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            status.toLowerCase() == 'pending'
+                                                ? Colors.amber.withOpacity(0.2)
+                                                : Colors.green.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Icon(
+                                        status.toLowerCase() == 'pending'
+                                            ? Icons.access_time
+                                            : Icons.check_circle,
+                                        color:
+                                            status.toLowerCase() == 'pending'
+                                                ? Colors.amber[800]
+                                                : Colors.green,
+                                        size: 32,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Order #${order['orderId'] ?? ''}",
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            customerName,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.access_time,
+                                                size: 14,
+                                                color: Colors.grey,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                formattedTime,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 8,
+                                        horizontal: 12,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            status.toLowerCase() == 'pending'
+                                                ? Colors.amber.withOpacity(0.2)
+                                                : Colors.green.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        status.toUpperCase(),
+                                        style: TextStyle(
+                                          color:
+                                              status.toLowerCase() == 'pending'
+                                                  ? Colors.amber[800]
+                                                  : Colors.green,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       );
                     },
                   );

@@ -3,13 +3,11 @@ import 'package:Tiffinity/data/constants.dart';
 import 'package:Tiffinity/data/notifiers.dart';
 import 'package:Tiffinity/views/pages/admin_pages/admin_home_page.dart';
 import 'package:Tiffinity/views/pages/admin_pages/admin_profile_page.dart';
-import 'package:Tiffinity/views/pages/customer_pages/customer_settings_page.dart';
 import 'package:Tiffinity/views/widgets/admin_navbar_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:Tiffinity/views/pages/admin_pages/menu_management_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:Tiffinity/services/notification_service.dart'; // 🔔 ADD THIS
+import 'package:Tiffinity/services/notification_service.dart';
 
 class AdminWidgetTree extends StatefulWidget {
   const AdminWidgetTree({super.key});
@@ -22,19 +20,11 @@ class _AdminWidgetTreeState extends State<AdminWidgetTree> {
   @override
   void initState() {
     super.initState();
-    // 🔔 Save FCM token for this mess owner to receive notifications
     NotificationService().saveTokenToFirestore();
-  }
-
-  Future<void> _toggleOnlineStatus(String uid, bool status) async {
-    await FirebaseFirestore.instance.collection('messes').doc(uid).update({
-      'isOnline': status,
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final String uid = FirebaseAuth.instance.currentUser!.uid;
     final List<Widget> pages = [
       AdminHomePage(),
       MenuManagementPage(),
@@ -46,24 +36,7 @@ class _AdminWidgetTreeState extends State<AdminWidgetTree> {
         title: const Text("Admin", style: TextStyle(fontSize: 29)),
         centerTitle: true,
         actions: [
-          // 🔹 Online/Offline toggle
-          StreamBuilder<DocumentSnapshot>(
-            stream:
-                FirebaseFirestore.instance
-                    .collection('messes')
-                    .doc(uid)
-                    .snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) return const SizedBox();
-              bool isOnline = snapshot.data?['isOnline'] ?? false;
-              return Switch(
-                value: isOnline,
-                onChanged: (value) => _toggleOnlineStatus(uid, value),
-                activeColor: Colors.green,
-              );
-            },
-          ),
-          // 🔹 Theme toggle
+          // Theme toggle only
           IconButton(
             onPressed: () async {
               isDarkModeNotifier.value = !isDarkModeNotifier.value;
@@ -74,30 +47,16 @@ class _AdminWidgetTreeState extends State<AdminWidgetTree> {
                 isDarkModeNotifier.value,
               );
             },
-            icon: ValueListenableBuilder(
+            icon: ValueListenableBuilder<bool>(
               valueListenable: isDarkModeNotifier,
               builder: (context, isDarkMode, child) {
                 return Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode);
               },
             ),
           ),
-          // 🔹 Settings button
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) {
-                    return CustomerSettingsPage(title: 'Settings');
-                  },
-                ),
-              );
-            },
-            icon: const Icon(Icons.settings),
-          ),
         ],
       ),
-      body: ValueListenableBuilder(
+      body: ValueListenableBuilder<int>(
         valueListenable: adminSelectedPageNotifier,
         builder: (context, selectedPage, child) {
           return pages.elementAt(selectedPage);

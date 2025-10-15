@@ -1,6 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:Tiffinity/data/notifiers.dart';
 import 'package:Tiffinity/services/auth_services.dart';
 import 'package:Tiffinity/views/auth/welcome_page.dart';
@@ -13,72 +13,101 @@ class CustomerProfilePage extends StatefulWidget {
 }
 
 class _CustomerProfilePageState extends State<CustomerProfilePage> {
-  bool allowLocation = false;
-  File? _profileImage;
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController addressController = TextEditingController();
+  bool _isLoading = true;
+  bool _isSaving = false;
 
-  final TextEditingController nameController = TextEditingController(
-    text: "Sample Name",
-  );
-  final TextEditingController contactController = TextEditingController(
-    text: "1234567890",
-  );
-  final TextEditingController altContactController = TextEditingController(
-    text: "9876543210",
-  );
-  final TextEditingController emailController = TextEditingController(
-    text: "xyz@abc.com",
-  );
-  final TextEditingController addressController = TextEditingController(
-    text: "123 Main Street, City",
-  );
-  final TextEditingController anotherAddressController =
-      TextEditingController();
-
-  final ImagePicker _picker = ImagePicker();
-
-  Future<void> _pickImage(ImageSource source) async {
-    final pickedFile = await _picker.pickImage(
-      source: source,
-      imageQuality: 80,
-    );
-    if (pickedFile != null) {
-      setState(() {
-        _profileImage = File(pickedFile.path);
-      });
-    }
-    if (mounted) Navigator.pop(context);
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
   }
 
-  void _showImageSourceSheet() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.all(20),
-          child: Wrap(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.photo_library, color: Colors.blue),
-                title: const Text("Choose from Gallery"),
-                onTap: () => _pickImage(ImageSource.gallery),
-              ),
-              ListTile(
-                leading: const Icon(Icons.camera_alt, color: Colors.green),
-                title: const Text("Take a Photo"),
-                onTap: () => _pickImage(ImageSource.camera),
-              ),
-            ],
+  Future<void> _loadUserData() async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) return;
+
+      final userDoc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId)
+              .get();
+
+      if (userDoc.exists) {
+        final data = userDoc.data()!;
+        setState(() {
+          nameController.text = data['name'] ?? '';
+          phoneController.text = data['phone'] ?? '';
+          addressController.text = data['address'] ?? '';
+          _isLoading = false;
+        });
+      } else {
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading profile: $e')));
+      }
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    if (nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please enter your name')));
+      return;
+    }
+
+    if (phoneController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your phone number')),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) return;
+
+      await FirebaseFirestore.instance.collection('users').doc(userId).set({
+        'name': nameController.text.trim(),
+        'phone': phoneController.text.trim(),
+        'address': addressController.text.trim(),
+        'email': FirebaseAuth.instance.currentUser?.email ?? '',
+        'role': 'customer',
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Profile saved successfully ✅"),
+            backgroundColor: Colors.green,
           ),
         );
-      },
-    );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving profile: $e')));
+      }
+    } finally {
+      setState(() => _isSaving = false);
+    }
   }
 
   Future<void> _logout(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
@@ -119,25 +148,23 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
     }
   }
 
-  void _saveProfile() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Profile saved successfully ✅")),
-    );
-  }
-
   Widget _buildField(
     String label,
     TextEditingController controller, {
     int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: TextField(
         controller: controller,
         maxLines: maxLines,
+        keyboardType: keyboardType,
         decoration: InputDecoration(
           labelText: label,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          filled: true,
+          fillColor: Colors.grey.shade50,
         ),
       ),
     );
@@ -166,37 +193,31 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            // Personal Info
-            _buildSection("Personal Info", [
+            // Profile Section
+            _buildSection("Personal Information", [
               Center(
                 child: Stack(
                   children: [
                     CircleAvatar(
                       radius: 50,
-                      backgroundImage:
-                          _profileImage != null
-                              ? FileImage(_profileImage!)
-                              : const AssetImage("assets/profile.png")
-                                  as ImageProvider,
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: GestureDetector(
-                        onTap: _showImageSourceSheet,
-                        child: CircleAvatar(
-                          radius: 18,
-                          backgroundColor: Colors.blue,
-                          child: const Icon(
-                            Icons.camera_alt,
-                            color: Colors.white,
-                            size: 18,
-                          ),
+                      backgroundColor: Colors.teal,
+                      child: Text(
+                        nameController.text.isNotEmpty
+                            ? nameController.text[0].toUpperCase()
+                            : 'U',
+                        style: const TextStyle(
+                          fontSize: 40,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -206,38 +227,17 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
               const SizedBox(height: 15),
               _buildField("Name", nameController),
             ]),
-
             // Contact Details
             _buildSection("Contact Details", [
-              _buildField("Contact", contactController),
-              _buildField("Alternate Contact", altContactController),
-              _buildField("Email", emailController),
-            ]),
-
-            // Address Details
-            _buildSection("Address Details", [
-              _buildField("Address", addressController, maxLines: 2),
               _buildField(
-                "Another Address",
-                anotherAddressController,
-                maxLines: 2,
+                "Phone",
+                phoneController,
+                keyboardType: TextInputType.phone,
               ),
+              _buildField("Address", addressController, maxLines: 3),
             ]),
-
-            // Location toggle
-            _buildSection("Preferences", [
-              SwitchListTile(
-                title: const Text("Allow Location"),
-                secondary: const Icon(Icons.location_pin, color: Colors.blue),
-                value: allowLocation,
-                onChanged: (val) {
-                  setState(() => allowLocation = val);
-                },
-              ),
-            ]),
-
             // Logout button
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
@@ -248,23 +248,40 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                   style: TextStyle(
                     color: Colors.red,
                     fontWeight: FontWeight.w600,
+                    fontSize: 16,
                   ),
                 ),
               ),
             ),
-
-            const SizedBox(height: 80),
+            const SizedBox(height: 100),
           ],
         ),
       ),
-
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _saveProfile,
-        icon: const Icon(Icons.save),
-        label: const Text("Save Profile"),
-        backgroundColor: Colors.blue,
+        onPressed: _isSaving ? null : _saveProfile,
+        icon:
+            _isSaving
+                ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+                : const Icon(Icons.save),
+        label: Text(_isSaving ? 'Saving...' : 'Save Profile'),
+        backgroundColor: const Color.fromARGB(255, 27, 84, 78),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    phoneController.dispose();
+    addressController.dispose();
+    super.dispose();
   }
 }

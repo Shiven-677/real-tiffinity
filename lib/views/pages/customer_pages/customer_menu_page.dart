@@ -985,8 +985,7 @@ class _MenuPageState extends State<MenuPage> {
               .collection('messes')
               .doc(widget.messId)
               .get();
-
-      final messData = messDoc.data() as Map?;
+      final messData = messDoc.data() as Map<String, dynamic>?;
 
       if (messData == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1009,8 +1008,8 @@ class _MenuPageState extends State<MenuPage> {
             duration: Duration(seconds: 3),
           ),
         );
-        Navigator.pop(context); // Close cart bottom sheet
-        Navigator.pop(context); // Close menu page
+        Navigator.pop(context);
+        Navigator.pop(context);
         return;
       }
 
@@ -1027,13 +1026,16 @@ class _MenuPageState extends State<MenuPage> {
       final orderId =
           'TIF${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}';
 
-      // Create order with mess owner ID for notifications
-      await FirebaseFirestore.instance.collection('orders').add({
+      // Create order document with custom ID (not auto-generated)
+      final orderDocRef = FirebaseFirestore.instance
+          .collection('orders')
+          .doc(orderId);
+
+      await orderDocRef.set({
         'orderId': orderId,
         'messId': widget.messId,
         'messName': messData['messName'] ?? 'Unknown Mess',
-        'messAddress': messData['address'] ?? 'Address not available',
-        'messOwnerId': messData['ownerId'], // Add owner ID for notifications
+        'messOwnerId': messData['ownerId'],
         'customerId': currentUser.uid,
         'customerEmail': currentUser.email,
         'items': orderItems,
@@ -1042,10 +1044,9 @@ class _MenuPageState extends State<MenuPage> {
         'paymentStatus': 'Unpaid',
         'orderTime': FieldValue.serverTimestamp(),
         'createdAt': FieldValue.serverTimestamp(),
-        'isActive': true,
       });
 
-      // 🔔 Send notification to mess owner
+      // Send notification to mess owner
       await NotificationService().sendOrderNotificationToMess(
         messId: widget.messId,
         orderId: orderId,
@@ -1056,28 +1057,22 @@ class _MenuPageState extends State<MenuPage> {
       cartNotifier.value = {};
 
       if (mounted) {
-        Navigator.pop(context); // Close cart bottom sheet
-        Navigator.pop(context); // Close menu page
+        Navigator.pop(context); // Close cart
+        Navigator.pop(context); // Close menu
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Order placed successfully! Order ID: $orderId'),
             backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
+            duration: const Duration(seconds: 2),
           ),
         );
+
+        // Navigate to tracking page with the orderId
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder:
-                (context) => OrderTrackingPage(
-                  orderId: orderId,
-                  orderItems: orderItems.cast<Map<String, dynamic>>(),
-                  totalAmount: totalAmount,
-                  messName: messData['messName']?.toString() ?? 'Restaurant',
-                  messAddress:
-                      messData['address']?.toString() ??
-                      'Address not available',
-                ),
+            builder: (context) => OrderTrackingPage(orderId: orderId),
           ),
         );
       }
@@ -1085,8 +1080,8 @@ class _MenuPageState extends State<MenuPage> {
       print('Error during checkout: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error processing order. Please try again.'),
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );

@@ -1,62 +1,56 @@
 import 'package:flutter/material.dart';
-import 'package:Tiffinity/data/constants.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'order_tracking_page.dart';
 
-class CustomerOrdersPage extends StatefulWidget {
+class CustomerOrdersPage extends StatelessWidget {
   const CustomerOrdersPage({super.key});
 
   @override
-  State<CustomerOrdersPage> createState() => _CustomerOrdersPageState();
-}
-
-class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
-  // Mock orders data
-  final List<Map<String, dynamic>> orders = [
-    {
-      'orderId': 'TIF12345',
-      'messName': 'Juis Homemade Food',
-      'status': 'Being Prepared',
-      'items': [
-        {'name': 'Poha', 'quantity': 2, 'price': 70, 'type': 'Veg'},
-        {'name': 'Upma', 'quantity': 1, 'price': 80, 'type': 'Veg'},
-      ],
-      'totalAmount': 220.0,
-      'orderTime': '9:15 PM',
-      'estimatedDelivery': '9:45 PM',
-      'messAddress': 'FC Road, Pune',
-      'isActive': true,
-    },
-    {
-      'orderId': 'TIF12344',
-      'messName': 'Mumbai Tiffin Center',
-      'status': 'Delivered',
-      'items': [
-        {'name': 'Dal Rice', 'quantity': 1, 'price': 120, 'type': 'Veg'},
-        {'name': 'Roti', 'quantity': 4, 'price': 60, 'type': 'Veg'},
-      ],
-      'totalAmount': 180.0,
-      'orderTime': 'Yesterday, 1:30 PM',
-      'estimatedDelivery': 'Yesterday, 2:00 PM',
-      'messAddress': 'Kothrud, Pune',
-      'isActive': false,
-    },
-  ];
-
-  @override
   Widget build(BuildContext context) {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+
+    if (currentUserId == null) {
+      return const Scaffold(
+        body: Center(child: Text('Please login to view orders')),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      body:
-          orders.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: orders.length,
-                itemBuilder: (context, index) {
-                  final order = orders[index];
-                  return _buildOrderCard(order);
-                },
-              ),
+      body: StreamBuilder<QuerySnapshot>(
+        stream:
+            FirebaseFirestore.instance
+                .collection('orders')
+                .where('customerId', isEqualTo: currentUserId)
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return _buildEmptyState();
+          }
+
+          final orders = snapshot.data!.docs;
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: orders.length,
+            itemBuilder: (context, index) {
+              final orderDoc = orders[index];
+              final order = orderDoc.data() as Map<String, dynamic>;
+              return _buildOrderCard(context, orderDoc.id, order);
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -85,7 +79,37 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
     );
   }
 
-  Widget _buildOrderCard(Map<String, dynamic> order) {
+  Widget _buildOrderCard(
+    BuildContext context,
+    String orderId,
+    Map<String, dynamic> order,
+  ) {
+    final status = order['status'] ?? 'Pending';
+    final items = List<Map<String, dynamic>>.from(order['items'] ?? []);
+
+    // Calculate total
+    double totalAmount = 0;
+    for (var item in items) {
+      final qty = item['quantity'] ?? item['qty'] ?? 0;
+      final price = item['price'] ?? 0.0;
+      final qtyDouble = (qty is int) ? qty.toDouble() : (qty as double? ?? 0.0);
+      final priceDouble =
+          (price is int) ? price.toDouble() : (price as double? ?? 0.0);
+      totalAmount += qtyDouble * priceDouble;
+    }
+
+    String formattedTime = '';
+    if (order['orderTime'] != null) {
+      try {
+        final timestamp = order['orderTime'] as Timestamp;
+        final dateTime = timestamp.toDate();
+        formattedTime =
+            '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+      } catch (e) {
+        formattedTime = 'Just now';
+      }
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -102,23 +126,12 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
       ),
       child: InkWell(
         onTap: () {
-          if (order['isActive']) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder:
-                    (context) => OrderTrackingPage(
-                      orderId: order['orderId'],
-                      orderItems: List<Map<String, dynamic>>.from(
-                        order['items'],
-                      ),
-                      totalAmount: order['totalAmount'],
-                      messName: order['messName'],
-                      messAddress: order['messAddress'],
-                    ),
-              ),
-            );
-          }
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OrderTrackingPage(orderId: orderId),
+            ),
+          );
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -126,7 +139,6 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Order header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -135,17 +147,17 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          order['messName'],
+                          'Order #${order['orderId'] ?? ''}',
                           style: const TextStyle(
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Order #${order['orderId']}',
+                          formattedTime,
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             color: Colors.grey[600],
                           ),
                         ),
@@ -158,13 +170,13 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(order['status']).withOpacity(0.1),
+                      color: _getStatusColor(status).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      order['status'],
+                      status.toUpperCase(),
                       style: TextStyle(
-                        color: _getStatusColor(order['status']),
+                        color: _getStatusColor(status),
                         fontWeight: FontWeight.w600,
                         fontSize: 12,
                       ),
@@ -173,42 +185,28 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
                 ],
               ),
               const SizedBox(height: 12),
-              // Order items
-              ...order['items'].take(2).map<Widget>((item) {
+              // Show first 2 items
+              ...items.take(2).map((item) {
+                final qty = item['quantity'] ?? item['qty'] ?? 0;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Row(
                     children: [
-                      Container(
-                        width: 16,
-                        height: 16,
-                        decoration: BoxDecoration(
-                          color:
-                              item['type'] == 'Veg' ? Colors.green : Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          item['type'] == 'Veg'
-                              ? Icons.eco
-                              : Icons.lunch_dining,
-                          size: 10,
-                          color: Colors.white,
-                        ),
-                      ),
+                      const Icon(Icons.circle, size: 6, color: Colors.grey),
                       const SizedBox(width: 8),
                       Text(
-                        '${item['name']} × ${item['quantity']}',
+                        '${item['name']} × $qty',
                         style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                       ),
                     ],
                   ),
                 );
               }).toList(),
-              if (order['items'].length > 2)
+              if (items.length > 2)
                 Padding(
-                  padding: const EdgeInsets.only(left: 24),
+                  padding: const EdgeInsets.only(left: 14),
                   child: Text(
-                    '+${order['items'].length - 2} more items',
+                    '+${items.length - 2} more items',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey[500],
@@ -219,76 +217,46 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
               const SizedBox(height: 12),
               const Divider(),
               const SizedBox(height: 12),
-              // Order footer
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '₹${order['totalAmount'].toStringAsFixed(0)}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color.fromARGB(255, 27, 84, 78),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Ordered at ${order['orderTime']}',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                      ),
-                    ],
-                  ),
-                  if (order['isActive'])
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color.fromARGB(255, 27, 84, 78),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Track Order',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
-                            ),
-                          ),
-                          SizedBox(width: 4),
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            color: Colors.white,
-                            size: 12,
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    TextButton(
-                      onPressed: () {
-                        // Reorder functionality
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Items added to cart for reorder'),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        'Reorder',
-                        style: TextStyle(
-                          color: Color.fromARGB(255, 27, 84, 78),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                  Text(
+                    '₹${totalAmount.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(255, 27, 84, 78),
                     ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(255, 27, 84, 78),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'View Details',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                        SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          color: Colors.white,
+                          size: 12,
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -300,11 +268,9 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'being prepared':
+      case 'pending':
         return Colors.orange;
-      case 'out for delivery':
-        return Colors.blue;
-      case 'delivered':
+      case 'completed':
         return Colors.green;
       case 'cancelled':
         return Colors.red;

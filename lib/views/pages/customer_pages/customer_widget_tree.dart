@@ -1,71 +1,57 @@
+import 'package:flutter/material.dart';
 import 'package:Tiffinity/data/constants.dart';
 import 'package:Tiffinity/data/notifiers.dart';
 import 'package:Tiffinity/views/pages/customer_pages/customer_home_page.dart';
+import 'package:Tiffinity/views/pages/customer_pages/customer_orders_page.dart';
 import 'package:Tiffinity/views/pages/customer_pages/customer_profile_page.dart';
-import 'package:Tiffinity/views/pages/customer_pages/customer_settings_page.dart';
-import 'package:flutter/material.dart';
+import 'package:Tiffinity/views/widgets/customer_navbar_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../widgets/customer_navbar_widget.dart';
 
 class CustomerWidgetTree extends StatelessWidget {
   const CustomerWidgetTree({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> pages = [CustomerHomePage(), CustomerProfilePage()];
+    final List<Widget> pages = [
+      CustomerHomePage(),
+      CustomerOrdersPage(),
+      CustomerProfilePage(),
+    ];
+
     return Scaffold(
-      //app bar
       appBar: AppBar(
-        title: Text("Tiffinity", style: TextStyle(fontSize: 29)), //title
-
+        title: const Text(
+          "Tiffinity",
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
-
         actions: [
+          // Only theme toggle button
           IconButton(
             onPressed: () async {
-              isDarkModeNotifier.value =
-                  !isDarkModeNotifier.value; //toggle dark mode
+              isDarkModeNotifier.value = !isDarkModeNotifier.value;
               final SharedPreferences prefs =
                   await SharedPreferences.getInstance();
               await prefs.setBool(
                 KConstants.themeModeKey,
                 isDarkModeNotifier.value,
               );
-            }, //action button
-            icon: ValueListenableBuilder(
+            },
+            icon: ValueListenableBuilder<bool>(
               valueListenable: isDarkModeNotifier,
               builder: (context, isDarkMode, child) {
                 return Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode);
               },
             ),
           ),
-
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) {
-                    return CustomerSettingsPage(
-                      title: 'Settingsss',
-                    ); //navigate to settings page
-                  },
-                ),
-              );
-            },
-            icon: Icon(Icons.settings),
-          ),
         ],
       ),
-
-      body: ValueListenableBuilder(
+      body: ValueListenableBuilder<int>(
         valueListenable: customerSelectedPageNotifier,
         builder: (context, selectedPage, child) {
           return pages.elementAt(selectedPage);
         },
       ),
-
-      //bottom navigation bar
       bottomNavigationBar: CustomerNavbarWidget(),
     );
   }

@@ -24,8 +24,15 @@ android {
 
     defaultConfig {
         applicationId = "com.example.practise"
+<<<<<<< HEAD
+        // You can update the following values to match your application needs.
+        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
+=======
         minSdk = 23
         targetSdk = 35  // Changed from flutter.targetSdkVersion to 35
+>>>>>>> a5dd2825f288f290acf707d55018f9de393775fa
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

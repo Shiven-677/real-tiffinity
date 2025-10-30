@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:Tiffinity/data/constants.dart';
 import 'package:Tiffinity/data/notifiers.dart';
+import 'package:Tiffinity/views/auth/both_login_page.dart';
 import 'package:Tiffinity/views/pages/customer_pages/customer_home_page.dart';
 import 'package:Tiffinity/views/pages/customer_pages/customer_orders_page.dart';
 import 'package:Tiffinity/views/pages/customer_pages/customer_profile_page.dart';
@@ -13,20 +15,41 @@ class CustomerWidgetTree extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [
-      CustomerHomePage(),
-      CustomerOrdersPage(),
-      CustomerProfilePage(),
+      const CustomerHomePage(),
+      const CustomerOrdersPage(),
+      const CustomerProfilePage(),
     ];
 
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          "Tiffinity",
+          'Tiffinity',
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         actions: [
-          // Only theme toggle button
+          // Login button for guest users
+          StreamBuilder<User?>(
+            stream: FirebaseAuth.instance.authStateChanges(),
+            builder: (context, snapshot) {
+              if (snapshot.data == null) {
+                return IconButton(
+                  icon: const Icon(Icons.login),
+                  tooltip: 'Login',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const BothLoginPage(role: 'customer'),
+                      ),
+                    );
+                  },
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+          // Theme toggle
           IconButton(
             onPressed: () async {
               isDarkModeNotifier.value = !isDarkModeNotifier.value;
@@ -37,7 +60,7 @@ class CustomerWidgetTree extends StatelessWidget {
                 isDarkModeNotifier.value,
               );
             },
-            icon: ValueListenableBuilder<bool>(
+            icon: ValueListenableBuilder(
               valueListenable: isDarkModeNotifier,
               builder: (context, isDarkMode, child) {
                 return Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode);
@@ -46,13 +69,13 @@ class CustomerWidgetTree extends StatelessWidget {
           ),
         ],
       ),
-      body: ValueListenableBuilder<int>(
+      body: ValueListenableBuilder(
         valueListenable: customerSelectedPageNotifier,
         builder: (context, selectedPage, child) {
           return pages.elementAt(selectedPage);
         },
       ),
-      bottomNavigationBar: CustomerNavbarWidget(),
+      bottomNavigationBar: const CustomerNavbarWidget(),
     );
   }
 }

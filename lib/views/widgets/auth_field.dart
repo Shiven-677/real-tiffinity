@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class AuthField extends StatefulWidget {
   const AuthField({
@@ -10,6 +11,8 @@ class AuthField extends StatefulWidget {
     this.dropdownItems,
     this.dropdownValue,
     this.onDropdownChanged,
+    this.keyboardType, // ✅ ADDED
+    this.maxLength, // ✅ ADDED
   });
 
   final String hintText;
@@ -21,6 +24,10 @@ class AuthField extends StatefulWidget {
   final List<String>? dropdownItems;
   final String? dropdownValue;
   final void Function(String?)? onDropdownChanged;
+
+  // ✅ NEW PARAMETERS
+  final TextInputType? keyboardType;
+  final int? maxLength;
 
   @override
   State<AuthField> createState() => _AuthFieldState();
@@ -71,6 +78,8 @@ class _AuthFieldState extends State<AuthField> {
     return TextFormField(
       controller: widget.controller,
       obscureText: widget.isPassword ? _obscureText : false,
+      keyboardType: widget.keyboardType, // ✅ ADDED
+      maxLength: widget.maxLength, // ✅ ADDED
       decoration: InputDecoration(
         contentPadding: const EdgeInsets.all(27.0),
         hintText: widget.hintText,
@@ -79,6 +88,7 @@ class _AuthFieldState extends State<AuthField> {
           borderSide: const BorderSide(width: 3.0),
         ),
         prefixIcon: Icon(widget.icon),
+        counterText: widget.maxLength != null ? '' : null, // Hide counter
         suffixIcon:
             widget.isPassword
                 ? IconButton(

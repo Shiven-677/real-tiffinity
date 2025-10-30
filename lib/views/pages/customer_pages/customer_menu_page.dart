@@ -4,8 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:Tiffinity/data/notifiers.dart';
 import 'package:Tiffinity/data/constants.dart';
 import 'package:Tiffinity/services/notification_service.dart';
-
-// Import the order tracking page
+import 'package:Tiffinity/views/widgets/checkout_login_dialog.dart';
+import 'order_tracking_page.dart';
 import 'order_tracking_page.dart';
 
 class MenuPage extends StatefulWidget {
@@ -67,7 +67,7 @@ class _MenuPageState extends State<MenuPage> {
                               Icons.shopping_cart,
                               color: Colors.white,
                             ),
-                            onPressed: () => _showCartBottomSheet(context),
+                            onPressed: () => showCartBottomSheet(context),
                           ),
                           if (itemCount > 0)
                             Positioned(
@@ -362,7 +362,7 @@ class _MenuPageState extends State<MenuPage> {
                 width: double.infinity,
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 child: FloatingActionButton.extended(
-                  onPressed: () => _showCartBottomSheet(context),
+                  onPressed: () => showCartBottomSheet(context),
                   backgroundColor: const Color.fromARGB(255, 27, 84, 78),
                   label: SizedBox(
                     width: MediaQuery.of(context).size.width - 60,
@@ -789,7 +789,7 @@ class _MenuPageState extends State<MenuPage> {
     }
   }
 
-  void _showCartBottomSheet(BuildContext context) {
+  void showCartBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -930,7 +930,7 @@ class _MenuPageState extends State<MenuPage> {
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: () => _checkout(totalAmount),
+                              onPressed: () => checkout(totalAmount),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color.fromARGB(
                                   255,
@@ -966,25 +966,37 @@ class _MenuPageState extends State<MenuPage> {
     );
   }
 
-  void _checkout(double totalAmount) async {
+  void checkout(double totalAmount) async {
     try {
+      // ✅ CHECK IF USER IS LOGGED IN
       final currentUser = FirebaseAuth.instance.currentUser;
+
       if (currentUser == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please login to place order'),
-            backgroundColor: Colors.red,
-          ),
+        // ✅ SHOW SWIGGY-STYLE LOGIN DIALOG
+        Navigator.pop(context); // Close cart first
+
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder:
+              (context) => CheckoutLoginDialog(
+                onLoginSuccess: () {
+                  // After successful login, re-open cart and proceed
+                  showCartBottomSheet(context);
+                },
+              ),
         );
         return;
       }
 
+      // ✅ USER IS LOGGED IN - PROCEED WITH CHECKOUT
       // Validate mess is still online
       final messDoc =
           await FirebaseFirestore.instance
               .collection('messes')
               .doc(widget.messId)
               .get();
+
       final messData = messDoc.data() as Map<String, dynamic>?;
 
       if (messData == null) {
@@ -1059,7 +1071,6 @@ class _MenuPageState extends State<MenuPage> {
       if (mounted) {
         Navigator.pop(context); // Close cart
         Navigator.pop(context); // Close menu
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Order placed successfully! Order ID: $orderId'),

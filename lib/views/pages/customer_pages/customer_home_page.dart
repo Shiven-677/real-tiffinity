@@ -10,7 +10,7 @@ class CustomerHomePage extends StatefulWidget {
 }
 
 class _CustomerHomePageState extends State<CustomerHomePage> {
-  String searchQuery = "";
+  String searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +18,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
       child: Column(
         children: [
+          // Search bar
           TextField(
             decoration: InputDecoration(
               border: OutlineInputBorder(
@@ -34,26 +35,74 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
           ),
           const SizedBox(height: 8.0),
 
+          // Messes list
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream:
                   FirebaseFirestore.instance
                       .collection('messes')
-                      .where('isOnline', isEqualTo: true)
-                      .snapshots(),
+                      .snapshots(), // ✅ Remove the .where() filter initially
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(
-                    child: Text("No messes online right now"),
+
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 60,
+                          color: Colors.red,
+                        ),
+                        const SizedBox(height: 16),
+                        Text('Error: ${snapshot.error}'),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: () => setState(() {}),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
                   );
                 }
 
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.restaurant_outlined,
+                          size: 80,
+                          color: Colors.grey,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'No messes available',
+                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                // Filter messes by online status and search query
                 final messes =
                     snapshot.data!.docs.where((doc) {
-                      final mess = doc.data() as Map<String, dynamic>;
+                      final mess = doc.data() as Map<String, dynamic>?;
+
+                      if (mess == null) return false;
+
+                      // ✅ Check if isOnline field exists and is true
+                      final isOnline = mess['isOnline'] == true;
+                      if (!isOnline) return false;
+
+                      // ✅ Search filter with null safety
+                      if (searchQuery.isEmpty) return true;
+
                       final name =
                           (mess['messName'] ?? '').toString().toLowerCase();
                       final description =
@@ -64,21 +113,39 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                     }).toList();
 
                 if (messes.isEmpty) {
-                  return const Center(child: Text("No results found"));
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.search_off, size: 80, color: Colors.grey),
+                        SizedBox(height: 16),
+                        Text(
+                          'No messes online right now',
+                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  );
                 }
 
                 return ListView.builder(
                   itemCount: messes.length,
+                  padding: const EdgeInsets.only(bottom: 16),
                   itemBuilder: (context, index) {
-                    final mess = messes[index].data() as Map<String, dynamic>;
+                    final messDoc = messes[index];
+                    final mess = messDoc.data() as Map<String, dynamic>? ?? {};
 
                     return CardWidget(
                       title: mess['messName'] ?? 'Unnamed',
-                      description: mess['description'] ?? '',
-                      ratings: "4.5",
-                      distance: "1.0",
-                      isVeg: mess['messType']?.toLowerCase() == 'veg',
-                      messId: messes[index].id, // Pass the mess ID here
+                      description: mess['description'] ?? 'No description',
+                      ratings: '4.5', // You can add ratings field later
+                      distance: '1.0', // You can calculate distance later
+                      isVeg:
+                          (mess['messType'] ?? 'Veg')
+                              .toString()
+                              .toLowerCase() ==
+                          'veg',
+                      messId: messDoc.id,
                     );
                   },
                 );

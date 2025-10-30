@@ -10,7 +10,7 @@ class AuthService {
   // Auth state stream
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // SIGN IN
+  // SIGN IN with Email/Password
   Future<UserCredential> signIn({
     required String email,
     required String password,
@@ -25,7 +25,7 @@ class AuthService {
     }
   }
 
-  // SIGN UP
+  // ✅ SIGN UP with Email/Password (ADD THIS METHOD)
   Future<UserCredential> signUp({
     required String email,
     required String password,
@@ -33,14 +33,15 @@ class AuthService {
     try {
       final UserCredential credential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
-      await credential.user?.sendEmailVerification();
+      // Optionally send email verification
+      // await credential.user?.sendEmailVerification();
       return credential;
     } on FirebaseAuthException catch (e) {
       throw AuthException(_handleAuthError(e));
     }
   }
 
-  //LOGOUT
+  // LOGOUT
   Future<void> logout() async {
     try {
       await _auth.signOut();
@@ -53,23 +54,18 @@ class AuthService {
   // ERROR HANDLER
   String _handleAuthError(FirebaseAuthException e) {
     switch (e.code) {
-      case 'invalid-email':
-        return 'Invalid email address';
-      case 'user-disabled':
-        return 'Account disabled';
       case 'user-not-found':
-        return 'No account found';
+        return 'No user found with this email';
       case 'wrong-password':
-      case 'invalid-credential':
         return 'Incorrect password';
       case 'email-already-in-use':
         return 'Email already registered';
-      case 'operation-not-allowed':
-        return 'Email accounts not enabled';
       case 'weak-password':
-        return 'Password must be 6+ characters';
-      case 'too-many-requests':
-        return 'Too many attempts. Try later';
+        return 'Password should be at least 6 characters';
+      case 'invalid-email':
+        return 'Invalid email format';
+      case 'network-request-failed':
+        return 'Network error. Check your connection';
       default:
         return 'Authentication failed: ${e.message}';
     }

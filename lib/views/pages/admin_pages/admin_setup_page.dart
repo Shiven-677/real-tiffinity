@@ -24,6 +24,7 @@ class AdminSetupPage extends StatefulWidget {
 
 class _AdminSetupPageState extends State<AdminSetupPage> {
   final messNameController = TextEditingController();
+  final phoneController = TextEditingController();
   final addressController = TextEditingController();
   final descriptionController = TextEditingController();
   String _messType = "Veg";
@@ -36,6 +37,7 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
     if (messNameController.text.trim().isEmpty ||
         addressController.text.trim().isEmpty ||
         descriptionController.text.trim().isEmpty ||
+        phoneController.text.trim().isEmpty ||
         timeSlots.any(
           (slot) =>
               slot.openingController.text.trim().isEmpty ||
@@ -48,6 +50,9 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
     setState(() => _isLoading = true);
 
     try {
+      // Generate mess ID based on userId
+      final messId = widget.userId;
+
       List<Map<String, String>> timings =
           timeSlots.map((slot) {
             return {
@@ -56,19 +61,19 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
             };
           }).toList();
 
-      await FirebaseFirestore.instance
-          .collection('messes')
-          .doc(widget.userId)
-          .set({
-            'messName': messNameController.text.trim(),
-            'description': descriptionController.text.trim(),
-            'messType': _messType,
-            'address': addressController.text.trim(),
-            'timings': timings,
-            'isOnline': false,
-            'ownerId': widget.userId,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
+      await FirebaseFirestore.instance.collection('messes').doc(messId).set({
+        'messName': messNameController.text.trim(),
+        'phone': phoneController.text.trim(),
+        'address': addressController.text.trim(),
+        'description': descriptionController.text.trim(),
+        'messType': _messType,
+        'timings': timings,
+        'isOnline': true,
+        'ownerId': widget.userId,
+        'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      if (!mounted) return;
 
       Navigator.pushAndRemoveUntil(
         context,
@@ -76,9 +81,9 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
         (route) => false,
       );
     } catch (e) {
-      _showError("Failed to save details");
+      _showError("Failed to save details: ${e.toString()}");
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -152,6 +157,16 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
                         hintText: "Mess Name",
                         icon: Icons.store,
                         controller: messNameController,
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Phone Number
+                      AuthField(
+                        hintText: "Phone Number",
+                        icon: Icons.phone,
+                        controller: phoneController,
+                        keyboardType: TextInputType.phone,
+                        maxLength: 10,
                       ),
                       const SizedBox(height: 20),
 
@@ -308,7 +323,6 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
                             ),
                         ],
                       ),
-
                       const SizedBox(height: 16),
 
                       // Address
@@ -334,5 +348,18 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    messNameController.dispose();
+    phoneController.dispose();
+    addressController.dispose();
+    descriptionController.dispose();
+    for (var slot in timeSlots) {
+      slot.openingController.dispose();
+      slot.closingController.dispose();
+    }
+    super.dispose();
   }
 }

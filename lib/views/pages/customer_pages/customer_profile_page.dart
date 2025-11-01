@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:Tiffinity/data/notifiers.dart';
+import 'package:Tiffinity/data/constants.dart';
 import 'package:Tiffinity/services/auth_services.dart';
-import 'package:Tiffinity/views/auth/both_login_page.dart'; // ✅ ADD THIS IMPORT
+import 'package:Tiffinity/views/auth/both_login_page.dart';
 import 'package:Tiffinity/views/auth/role_selection_page.dart';
 
 class CustomerProfilePage extends StatefulWidget {
@@ -115,7 +117,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
   }
 
   Future<void> _logout(BuildContext context) async {
-    final confirmed = await showDialog(
+    final confirmed = await showDialog<bool>(
       context: context,
       builder:
           (context) => AlertDialog(
@@ -178,6 +180,8 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
             style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 32),
+
+          // Name Field
           TextField(
             controller: nameController,
             decoration: const InputDecoration(
@@ -187,6 +191,8 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
             ),
           ),
           const SizedBox(height: 16),
+
+          // Phone Field
           TextField(
             controller: phoneController,
             decoration: const InputDecoration(
@@ -196,6 +202,8 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
             ),
           ),
           const SizedBox(height: 16),
+
+          // Address Field
           TextField(
             controller: addressController,
             decoration: const InputDecoration(
@@ -206,6 +214,45 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
             maxLines: 3,
           ),
           const SizedBox(height: 32),
+
+          // ✅ DARK MODE TOGGLE ADDED HERE
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: ValueListenableBuilder<bool>(
+              valueListenable: isDarkModeNotifier,
+              builder: (context, isDarkMode, child) {
+                return SwitchListTile(
+                  title: const Text(
+                    'Dark Mode',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  subtitle: Text(
+                    isDarkMode ? 'Enabled' : 'Disabled',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                  secondary: Icon(
+                    isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                    color: const Color.fromARGB(255, 27, 84, 78),
+                  ),
+                  value: isDarkMode,
+                  onChanged: (bool value) async {
+                    isDarkModeNotifier.value = value;
+                    final SharedPreferences prefs =
+                        await SharedPreferences.getInstance();
+                    await prefs.setBool(KConstants.themeModeKey, value);
+                  },
+                  activeColor: const Color.fromARGB(255, 27, 84, 78),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Save Profile Button
           ElevatedButton(
             onPressed: _isSaving ? null : _saveProfile,
             style: ElevatedButton.styleFrom(
@@ -221,6 +268,8 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                     : const Text('Save Profile'),
           ),
           const SizedBox(height: 16),
+
+          // Logout Button
           OutlinedButton.icon(
             onPressed: () => _logout(context),
             icon: const Icon(Icons.logout, color: Colors.red),
@@ -255,6 +304,36 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
               style: TextStyle(color: Colors.grey),
             ),
             const SizedBox(height: 32),
+
+            // ✅ DARK MODE TOGGLE FOR GUESTS
+            Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: ValueListenableBuilder<bool>(
+                valueListenable: isDarkModeNotifier,
+                builder: (context, isDarkMode, child) {
+                  return SwitchListTile(
+                    title: const Text('Dark Mode'),
+                    secondary: Icon(
+                      isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                    ),
+                    value: isDarkMode,
+                    onChanged: (bool value) async {
+                      isDarkModeNotifier.value = value;
+                      final SharedPreferences prefs =
+                          await SharedPreferences.getInstance();
+                      await prefs.setBool(KConstants.themeModeKey, value);
+                    },
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+
             ElevatedButton.icon(
               onPressed: () {
                 Navigator.push(

@@ -21,14 +21,18 @@ class CardWidget extends StatelessWidget {
   final String messId;
 
   @override
+  @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return SingleChildScrollView(
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.symmetric(vertical: 10.0), // Add vertical padding
+        padding: const EdgeInsets.symmetric(vertical: 10.0),
         child: Card(
+          color: isDark ? Colors.grey[850] : Colors.white, // ✅ Dark mode card
           child: Padding(
-            padding: EdgeInsets.all(20.0), //card
+            padding: const EdgeInsets.all(20.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -37,21 +41,32 @@ class CardWidget extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style:
-                          KTextStyle.titleTealText, //style from constants.dart
+                      style: TextStyle(
+                        color: const Color.fromARGB(255, 27, 84, 78),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-
                     Row(
                       children: [
-                        const Icon(Icons.location_on, size: 20),
-                        Text(' $distance km'),
+                        Icon(
+                          Icons.location_on,
+                          size: 20,
+                          color:
+                              isDark ? Colors.grey[300] : Colors.grey[700], // ✅
+                        ),
+                        Text(
+                          ' $distance km',
+                          style: TextStyle(
+                            color:
+                                isDark ? Colors.grey[300] : Colors.black87, // ✅
+                          ),
+                        ),
                       ],
-                    ), //distance
+                    ),
                   ],
                 ),
-
-                SizedBox(height: 9.0),
-
+                const SizedBox(height: 9.0),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -60,24 +75,24 @@ class CardWidget extends StatelessWidget {
                         const Icon(Icons.star, color: Colors.amber),
                         Text(
                           ' $ratings',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Colors.black, // ✅
+                          ),
                         ),
                       ],
                     ),
-                    // Veg/Non-veg icon
                     if (isVeg) Symbols.vegSymbol else Symbols.nonVegSymbol,
                   ],
                 ),
-
-                SizedBox(height: 6.0),
-
+                const SizedBox(height: 6.0),
                 Text(
                   description,
-                  style: KTextStyle.descriptionText, //style from constants.dart
+                  style: TextStyle(
+                    color: isDark ? Colors.grey[400] : Colors.grey[600], // ✅
+                  ),
                 ),
-
-                SizedBox(height: 10.0),
-
+                const SizedBox(height: 10.0),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(

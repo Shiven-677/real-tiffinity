@@ -11,14 +11,32 @@ class CustomerOrdersPage extends StatelessWidget {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
 
     if (currentUserId == null) {
-      return const Scaffold(
-        body: Center(child: Text('Please login to view orders')),
+      return Scaffold(
+        backgroundColor:
+            Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey[900] // ✅ Dark mode
+                : Colors.white,
+        body: Center(
+          child: Text(
+            'Please login to view orders',
+            style: TextStyle(
+              color:
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Colors
+                          .white // ✅
+                      : Colors.black,
+            ),
+          ),
+        ),
       );
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      body: StreamBuilder<QuerySnapshot>(
+      backgroundColor:
+          Theme.of(context).brightness == Brightness.dark
+              ? Colors.grey[900] // ✅ Dark background
+              : Colors.grey[50],
+      body: StreamBuilder(
         stream:
             FirebaseFirestore.instance
                 .collection('orders')
@@ -31,15 +49,25 @@ class CustomerOrdersPage extends StatelessWidget {
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Text(
+                'Error: ${snapshot.error}',
+                style: TextStyle(
+                  color:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors
+                              .white // ✅
+                          : Colors.black,
+                ),
+              ),
+            );
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return _buildEmptyState();
+            return _buildEmptyState(context);
           }
 
           final orders = snapshot.data!.docs;
-
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: orders.length,
@@ -54,25 +82,33 @@ class CustomerOrdersPage extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState() {
-    return const Center(
+  Widget _buildEmptyState(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.receipt_long_outlined, size: 80, color: Colors.grey),
-          SizedBox(height: 16),
+          Icon(
+            Icons.receipt_long_outlined,
+            size: 80,
+            color: isDark ? Colors.grey[600] : Colors.grey, // ✅
+          ),
+          const SizedBox(height: 16),
           Text(
             'No orders yet',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
-              color: Colors.grey,
+              color: isDark ? Colors.grey[400] : Colors.grey, // ✅
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'Your order history will appear here',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(
+              color: isDark ? Colors.grey[500] : Colors.grey, // ✅
+            ),
           ),
         ],
       ),
@@ -84,6 +120,7 @@ class CustomerOrdersPage extends StatelessWidget {
     String orderId,
     Map<String, dynamic> order,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final status = order['status'] ?? 'Pending';
     final items = List<Map<String, dynamic>>.from(order['items'] ?? []);
 
@@ -113,11 +150,14 @@ class CustomerOrdersPage extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? Colors.grey[850] : Colors.white, // ✅ Dark card
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color:
+                isDark
+                    ? Colors.black.withOpacity(0.3) // ✅ Dark shadow
+                    : Colors.grey.withOpacity(0.1),
             spreadRadius: 1,
             blurRadius: 6,
             offset: const Offset(0, 3),
@@ -139,6 +179,7 @@ class CustomerOrdersPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Order Header Row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -148,9 +189,10 @@ class CustomerOrdersPage extends StatelessWidget {
                       children: [
                         Text(
                           'Order #${order['orderId'] ?? ''}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Colors.black, // ✅
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -158,12 +200,16 @@ class CustomerOrdersPage extends StatelessWidget {
                           formattedTime,
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.grey[600],
+                            color:
+                                isDark
+                                    ? Colors.grey[500] // ✅
+                                    : Colors.grey[600],
                           ),
                         ),
                       ],
                     ),
                   ),
+                  // Status Badge
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -185,6 +231,7 @@ class CustomerOrdersPage extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
+
               // Show first 2 items
               ...items.take(2).map((item) {
                 final qty = item['quantity'] ?? item['qty'] ?? 0;
@@ -192,16 +239,28 @@ class CustomerOrdersPage extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Row(
                     children: [
-                      const Icon(Icons.circle, size: 6, color: Colors.grey),
+                      Icon(
+                        Icons.circle,
+                        size: 6,
+                        color: isDark ? Colors.grey[600] : Colors.grey, // ✅
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         '${item['name']} × $qty',
-                        style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color:
+                              isDark
+                                  ? Colors.grey[400] // ✅
+                                  : Colors.grey[700],
+                        ),
                       ),
                     ],
                   ),
                 );
               }).toList(),
+
+              // More items indicator
               if (items.length > 2)
                 Padding(
                   padding: const EdgeInsets.only(left: 14),
@@ -209,14 +268,25 @@ class CustomerOrdersPage extends StatelessWidget {
                     '+${items.length - 2} more items',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[500],
+                      color:
+                          isDark
+                              ? Colors.grey[500] // ✅
+                              : Colors.grey[500],
                       fontStyle: FontStyle.italic,
                     ),
                   ),
                 ),
+
               const SizedBox(height: 12),
-              const Divider(),
+
+              // Divider
+              Divider(
+                color: isDark ? Colors.grey[700] : Colors.grey[300], // ✅
+              ),
+
               const SizedBox(height: 12),
+
+              // Price and Details Row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

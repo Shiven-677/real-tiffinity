@@ -1,3 +1,4 @@
+import 'package:Tiffinity/views/pages/admin_pages/admin_setup_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -130,7 +131,36 @@ class _AdminHomePageState extends State<AdminHomePage> {
   @override
   Widget build(BuildContext context) {
     if (_messId == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.store_mall_directory, color: Colors.grey, size: 80),
+              SizedBox(height: 16),
+              Text(
+                'No mess found for your admin account.',
+                style: TextStyle(fontSize: 18, color: Colors.grey),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                child: Text('Create Mess'),
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => AdminSetupPage(
+                            userId: FirebaseAuth.instance.currentUser!.uid,
+                          ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     return Scaffold(

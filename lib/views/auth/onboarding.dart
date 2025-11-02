@@ -18,39 +18,27 @@ class OnboardingPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Lottie.asset('assets/lotties/cooking.json'),
-                SizedBox(height: 20), // Add space between hero and text field
-
-                SizedBox(height: 20), // space
-
+                const SizedBox(height: 20),
                 Text(
                   "Tiffiinity is the way to order your healthy meals!!",
                   style: KTextStyle.titleTealText,
                   textAlign: TextAlign.justify,
                 ),
-
-                SizedBox(height: 20), // space
-
+                const SizedBox(height: 20),
                 FilledButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
+                    Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) {
-                          return RoleSelectionPage(); //navigate to settings page
-                        },
+                        builder: (_) => const RoleSelectionPage(),
                       ),
                     );
                   },
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: Size(
-                      double.infinity,
-                      40.0,
-                    ), //full width button
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 40),
                   ),
-                  child: Text('Next'),
+                  child: const Text('Next'),
                 ),
-
-                SizedBox(height: 70), // last space
+                const SizedBox(height: 70),
               ],
             ),
           ),

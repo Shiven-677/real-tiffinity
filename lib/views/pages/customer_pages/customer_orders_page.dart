@@ -12,30 +12,18 @@ class CustomerOrdersPage extends StatelessWidget {
 
     if (currentUserId == null) {
       return Scaffold(
-        backgroundColor:
-            Theme.of(context).brightness == Brightness.dark
-                ? Colors.grey[900] // ✅ Dark mode
-                : Colors.white,
+        backgroundColor: Colors.white,
         body: Center(
           child: Text(
             'Please login to view orders',
-            style: TextStyle(
-              color:
-                  Theme.of(context).brightness == Brightness.dark
-                      ? Colors
-                          .white // ✅
-                      : Colors.black,
-            ),
+            style: TextStyle(color: const Color.fromRGBO(255, 255, 255, 1)),
           ),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor:
-          Theme.of(context).brightness == Brightness.dark
-              ? Colors.grey[900] // ✅ Dark background
-              : Colors.grey[50],
+      backgroundColor: Colors.grey[50],
       body: StreamBuilder(
         stream:
             FirebaseFirestore.instance
@@ -53,11 +41,7 @@ class CustomerOrdersPage extends StatelessWidget {
               child: Text(
                 'Error: ${snapshot.error}',
                 style: TextStyle(
-                  color:
-                      Theme.of(context).brightness == Brightness.dark
-                          ? Colors
-                              .white // ✅
-                          : Colors.black,
+                  color: Colors.white, //
                 ),
               ),
             );
@@ -83,8 +67,6 @@ class CustomerOrdersPage extends StatelessWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -92,7 +74,7 @@ class CustomerOrdersPage extends StatelessWidget {
           Icon(
             Icons.receipt_long_outlined,
             size: 80,
-            color: isDark ? Colors.grey[600] : Colors.grey, // ✅
+            color: Colors.grey, // ✅
           ),
           const SizedBox(height: 16),
           Text(
@@ -100,14 +82,14 @@ class CustomerOrdersPage extends StatelessWidget {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
-              color: isDark ? Colors.grey[400] : Colors.grey, // ✅
+              color: Colors.grey, // ✅
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Your order history will appear here',
             style: TextStyle(
-              color: isDark ? Colors.grey[500] : Colors.grey, // ✅
+              color: Colors.grey, // ✅
             ),
           ),
         ],
@@ -120,7 +102,6 @@ class CustomerOrdersPage extends StatelessWidget {
     String orderId,
     Map<String, dynamic> order,
   ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final status = order['status'] ?? 'Pending';
     final items = List<Map<String, dynamic>>.from(order['items'] ?? []);
 
@@ -150,14 +131,11 @@ class CustomerOrdersPage extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: isDark ? Colors.grey[850] : Colors.white, // ✅ Dark card
+        color: Colors.white, // ✅ Dark card
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color:
-                isDark
-                    ? Colors.black.withOpacity(0.3) // ✅ Dark shadow
-                    : Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withOpacity(0.1),
             spreadRadius: 1,
             blurRadius: 6,
             offset: const Offset(0, 3),
@@ -192,7 +170,7 @@ class CustomerOrdersPage extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : Colors.black, // ✅
+                            color: Colors.black, // ✅
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -200,10 +178,7 @@ class CustomerOrdersPage extends StatelessWidget {
                           formattedTime,
                           style: TextStyle(
                             fontSize: 13,
-                            color:
-                                isDark
-                                    ? Colors.grey[500] // ✅
-                                    : Colors.grey[600],
+                            color: Colors.grey[600],
                           ),
                         ),
                       ],
@@ -242,18 +217,12 @@ class CustomerOrdersPage extends StatelessWidget {
                       Icon(
                         Icons.circle,
                         size: 6,
-                        color: isDark ? Colors.grey[600] : Colors.grey, // ✅
+                        color: Colors.grey, // ✅
                       ),
                       const SizedBox(width: 8),
                       Text(
                         '${item['name']} × $qty',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color:
-                              isDark
-                                  ? Colors.grey[400] // ✅
-                                  : Colors.grey[700],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                       ),
                     ],
                   ),
@@ -268,10 +237,7 @@ class CustomerOrdersPage extends StatelessWidget {
                     '+${items.length - 2} more items',
                     style: TextStyle(
                       fontSize: 12,
-                      color:
-                          isDark
-                              ? Colors.grey[500] // ✅
-                              : Colors.grey[500],
+                      color: Colors.grey[500],
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -281,7 +247,7 @@ class CustomerOrdersPage extends StatelessWidget {
 
               // Divider
               Divider(
-                color: isDark ? Colors.grey[700] : Colors.grey[300], // ✅
+                color: Colors.grey[300], // ✅
               ),
 
               const SizedBox(height: 12),

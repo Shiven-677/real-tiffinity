@@ -49,8 +49,6 @@ class _MenuPageState extends State<MenuPage> {
           return const Scaffold(body: Center(child: Text("Mess not found")));
         }
 
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-
         return Scaffold(
           body: CustomScrollView(
             slivers: [
@@ -174,7 +172,7 @@ class _MenuPageState extends State<MenuPage> {
               // ✅ MESS INFO SECTION - WITH DARK MODE
               SliverToBoxAdapter(
                 child: Container(
-                  color: isDark ? Colors.grey[900] : Colors.white,
+                  color: Colors.white,
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,17 +183,14 @@ class _MenuPageState extends State<MenuPage> {
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black,
+                          color: Colors.black,
                         ),
                       ),
                       const SizedBox(height: 4),
                       // Mess Type
                       Text(
                         messData['messType']?.toString() ?? 'Cuisine Type',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: isDark ? Colors.grey[400] : Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 8),
                       // Rating and timing row
@@ -232,19 +227,13 @@ class _MenuPageState extends State<MenuPage> {
                               Icon(
                                 Icons.access_time,
                                 size: 16,
-                                color:
-                                    isDark
-                                        ? Colors.grey[400]
-                                        : Colors.grey[600],
+                                color: Colors.grey[600],
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 'Open • Closes 10:30 PM',
                                 style: TextStyle(
-                                  color:
-                                      isDark
-                                          ? Colors.grey[400]
-                                          : Colors.grey[600],
+                                  color: Colors.grey[600],
                                   fontSize: 14,
                                 ),
                               ),
@@ -259,14 +248,13 @@ class _MenuPageState extends State<MenuPage> {
                           Icon(
                             Icons.location_on,
                             size: 16,
-                            color: isDark ? Colors.grey[400] : Colors.grey[600],
+                            color: Colors.grey[600],
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '1.50 km',
                             style: TextStyle(
-                              color:
-                                  isDark ? Colors.grey[400] : Colors.grey[600],
+                              color: Colors.grey[600],
                               fontSize: 14,
                             ),
                           ),
@@ -274,14 +262,13 @@ class _MenuPageState extends State<MenuPage> {
                           Icon(
                             Icons.access_time,
                             size: 16,
-                            color: isDark ? Colors.grey[400] : Colors.grey[600],
+                            color: Colors.grey[600],
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '28 mins',
                             style: TextStyle(
-                              color:
-                                  isDark ? Colors.grey[400] : Colors.grey[600],
+                              color: Colors.grey[600],
                               fontSize: 14,
                             ),
                           ),
@@ -295,7 +282,7 @@ class _MenuPageState extends State<MenuPage> {
               // ✅ SEARCH AND FILTER SECTION - WITH DARK MODE
               SliverToBoxAdapter(
                 child: Container(
-                  color: isDark ? Colors.grey[900] : Colors.white,
+                  color: Colors.white,
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: Row(
                     children: [
@@ -304,13 +291,11 @@ class _MenuPageState extends State<MenuPage> {
                         child: Container(
                           height: 45,
                           decoration: BoxDecoration(
-                            color: isDark ? Colors.grey[800] : Colors.grey[100],
+                            color: Colors.grey[100],
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: TextField(
-                            style: TextStyle(
-                              color: isDark ? Colors.white : Colors.black,
-                            ),
+                            style: TextStyle(color: Colors.black),
                             onChanged: (value) {
                               setState(() {
                                 searchQuery = value.toLowerCase();
@@ -318,18 +303,10 @@ class _MenuPageState extends State<MenuPage> {
                             },
                             decoration: InputDecoration(
                               hintText: 'Search menu items...',
-                              hintStyle: TextStyle(
-                                color:
-                                    isDark
-                                        ? Colors.grey[500]
-                                        : Colors.grey[500],
-                              ),
+                              hintStyle: TextStyle(color: Colors.grey[500]),
                               prefixIcon: Icon(
                                 Icons.search,
-                                color:
-                                    isDark
-                                        ? Colors.grey[500]
-                                        : Colors.grey[500],
+                                color: Colors.grey[500],
                               ),
                               border: InputBorder.none,
                               contentPadding: const EdgeInsets.symmetric(
@@ -346,37 +323,25 @@ class _MenuPageState extends State<MenuPage> {
                         height: 45,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         decoration: BoxDecoration(
-                          border: Border.all(
-                            color:
-                                isDark ? Colors.grey[700]! : Colors.grey[300]!,
-                          ),
+                          border: Border.all(color: Colors.grey[300]!),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              Icons.tune,
-                              color:
-                                  isDark ? Colors.grey[400] : Colors.grey[600],
-                              size: 20,
-                            ),
+                            Icon(Icons.tune, color: Colors.grey[600], size: 20),
                             const SizedBox(width: 4),
                             Text(
                               'Filter',
                               style: TextStyle(
-                                color:
-                                    isDark
-                                        ? Colors.grey[400]
-                                        : Colors.grey[600],
+                                color: Colors.grey[600],
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             const SizedBox(width: 4),
                             Icon(
                               Icons.keyboard_arrow_down,
-                              color:
-                                  isDark ? Colors.grey[400] : Colors.grey[600],
+                              color: Colors.grey[600],
                               size: 20,
                             ),
                           ],
@@ -445,8 +410,6 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   Widget _buildMenuSections() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return StreamBuilder(
       stream:
           FirebaseFirestore.instance
@@ -511,11 +474,10 @@ class _MenuPageState extends State<MenuPage> {
             final categoryItems = groupedItems[category]!;
 
             return Container(
-              color: isDark ? Colors.grey[900] : Colors.white,
+              color: Colors.white,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ✅ CATEGORY HEADER - WITH DARK MODE
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
                     child: Text(
@@ -523,7 +485,7 @@ class _MenuPageState extends State<MenuPage> {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : Colors.black,
+                        color: Colors.black,
                       ),
                     ),
                   ),
@@ -543,8 +505,6 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   Widget _buildMenuItem(String itemId, Map data) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return ValueListenableBuilder<Map<String, CartItem>>(
       valueListenable: cartNotifier,
       builder: (context, cart, _) {
@@ -553,7 +513,7 @@ class _MenuPageState extends State<MenuPage> {
 
         return Container(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          color: isDark ? Colors.grey[900] : Colors.white,
+          color: Colors.white,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -572,24 +532,22 @@ class _MenuPageState extends State<MenuPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ✅ ITEM NAME - WITH DARK MODE
                     Text(
                       data['name']?.toString() ?? 'Unknown Item',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : Colors.black,
+                        color: Colors.black,
                       ),
                     ),
                     const SizedBox(height: 4),
 
-                    // ✅ PRICE - WITH DARK MODE
                     Text(
                       '₹ ${_getPrice(data['price'])}',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : Colors.black,
+                        color: Colors.black,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -601,7 +559,7 @@ class _MenuPageState extends State<MenuPage> {
                         data['description'].toString(),
                         style: TextStyle(
                           fontSize: 14,
-                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                          color: Colors.grey[600],
                           height: 1.3,
                         ),
                         maxLines: 2,
@@ -739,12 +697,12 @@ class _MenuPageState extends State<MenuPage> {
                 width: 100,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.grey[800] : Colors.grey[200],
+                  color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   Icons.restaurant,
-                  color: isDark ? Colors.grey[600] : Colors.grey[400],
+                  color: Colors.grey[400],
                   size: 40,
                 ),
               ),
@@ -827,8 +785,6 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   void showCartBottomSheet(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -837,7 +793,7 @@ class _MenuPageState extends State<MenuPage> {
           (context) => Container(
             height: MediaQuery.of(context).size.height * 0.7,
             decoration: BoxDecoration(
-              color: isDark ? Colors.grey[900] : Colors.white,
+              color: Colors.white,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
@@ -851,9 +807,7 @@ class _MenuPageState extends State<MenuPage> {
                   return Center(
                     child: Text(
                       'Your cart is empty',
-                      style: TextStyle(
-                        color: isDark ? Colors.white : Colors.black,
-                      ),
+                      style: TextStyle(color: Colors.black),
                     ),
                   );
                 }
@@ -885,7 +839,7 @@ class _MenuPageState extends State<MenuPage> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black,
+                          color: Colors.black,
                         ),
                       ),
                     ),
@@ -901,13 +855,8 @@ class _MenuPageState extends State<MenuPage> {
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: isDark ? Colors.grey[850] : Colors.white,
-                              border: Border.all(
-                                color:
-                                    isDark
-                                        ? Colors.grey[700]!
-                                        : Colors.grey[200]!,
-                              ),
+                              color: Colors.white,
+                              border: Border.all(color: Colors.grey[200]!),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
@@ -922,10 +871,7 @@ class _MenuPageState extends State<MenuPage> {
                                         style: TextStyle(
                                           fontWeight: FontWeight.w600,
                                           fontSize: 16,
-                                          color:
-                                              isDark
-                                                  ? Colors.white
-                                                  : Colors.black,
+                                          color: Colors.black,
                                         ),
                                       ),
                                       const SizedBox(height: 4),
@@ -1010,7 +956,7 @@ class _MenuPageState extends State<MenuPage> {
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
-                                    color: isDark ? Colors.white : Colors.black,
+                                    color: Colors.black,
                                   ),
                                 ),
                               ],
@@ -1024,13 +970,10 @@ class _MenuPageState extends State<MenuPage> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.grey[850] : Colors.white,
+                        color: Colors.white,
                         boxShadow: [
                           BoxShadow(
-                            color:
-                                isDark
-                                    ? Colors.black.withOpacity(0.3)
-                                    : Colors.grey.shade300,
+                            color: Colors.grey.shade300,
                             blurRadius: 4,
                             offset: const Offset(0, -2),
                           ),
@@ -1046,7 +989,7 @@ class _MenuPageState extends State<MenuPage> {
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: isDark ? Colors.white : Colors.black,
+                                  color: Colors.black,
                                 ),
                               ),
                               Text(
@@ -1063,7 +1006,10 @@ class _MenuPageState extends State<MenuPage> {
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: () => checkout(totalAmount),
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _showPickupTimeDialog(totalAmount);
+                              },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color.fromARGB(
                                   255,
@@ -1099,126 +1045,235 @@ class _MenuPageState extends State<MenuPage> {
     );
   }
 
-  void checkout(double totalAmount) async {
-    try {
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser == null) {
-        Navigator.pop(context);
+  void _showPickupTimeDialog(double totalAmount) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder:
+          (context) => PickupTimeDialog(
+            onConfirm: (pickupTime) {
+              checkout(totalAmount, pickupTime);
+            },
+          ),
+    );
+  }
+
+  void checkout(double totalAmount, String pickupTime) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    // Require login
+    if (currentUser == null) {
+      if (mounted) {
         await showDialog(
           context: context,
           barrierDismissible: false,
           builder:
-              (context) => CheckoutLoginDialog(
-                onLoginSuccess: () {
-                  showCartBottomSheet(context);
+              (ctx) => CheckoutLoginDialog(
+                onLoginSuccess: () async {
+                  // Close the dialog first
+                  Navigator.of(ctx).pop();
+
+                  // Option A: re-run checkout with same parameters
+                  // Be careful to avoid infinite loops if login fails repeatedly.
+                  await Future.delayed(const Duration(milliseconds: 200));
+                  checkout(totalAmount, pickupTime); // reuse the same values
                 },
               ),
         );
-        return;
       }
+      return;
+    }
 
+    // Collect cart items for this mess
+    final currentCart = _getCurrentMessCart();
+    if (currentCart.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Your cart is empty')));
+      }
+      return;
+    }
+
+    // 1) Resolve customer's display name
+    String displayName = 'Customer';
+    try {
+      final userDoc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(currentUser.uid)
+              .get();
+      final profileName = (userDoc.data()?['name'] as String?)?.trim();
+      displayName =
+          (profileName != null && profileName.isNotEmpty)
+              ? profileName
+              : (currentUser.displayName ?? 'Customer');
+    } catch (_) {
+      displayName = currentUser.displayName ?? 'Customer';
+    }
+
+    try {
+      // 2) Read mess basic details (defensive fallbacks)
       final messDoc =
           await FirebaseFirestore.instance
               .collection('messes')
               .doc(widget.messId)
               .get();
+      final messData = messDoc.data() ?? {};
+      final messName = (messData['messName'] as String?) ?? 'Unknown Mess';
+      final messPhone = (messData['phone'] as String?) ?? 'Not available';
+      final messAddress = (messData['address'] as String?) ?? 'Not available';
+      final messOwnerId = messData['ownerId'] as String?;
 
-      final messData = messDoc.data() as Map?;
-
-      if (messData == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Mess not found'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
-      if (messData['isOnline'] != true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Sorry, this mess is currently offline and not accepting orders',
-            ),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-          ),
-        );
-        Navigator.pop(context);
-        Navigator.pop(context);
-        return;
-      }
-
+      // 3) Build order items array from cart
       final orderItems =
-          cartNotifier.value.values.map((item) {
+          currentCart.entries.map((e) {
+            final item = e.value;
             return {
+              'itemId': e.key,
               'name': item.name,
               'quantity': item.quantity,
               'price': item.price,
-              'itemId': item.id,
+              'total': item.price * item.quantity,
             };
           }).toList();
 
-      final orderId =
-          'TIF${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}';
+      // 4) Create order id and references
+      final ordersCol = FirebaseFirestore.instance.collection('orders');
+      final orderRef = ordersCol.doc();
+      final orderId = orderRef.id;
 
-      final orderDocRef = FirebaseFirestore.instance
-          .collection('orders')
-          .doc(orderId);
-
-      await orderDocRef.set({
+      // 5) Persist order document
+      await orderRef.set({
         'orderId': orderId,
         'messId': widget.messId,
-        'messName': messData['messName'] ?? 'Unknown Mess',
-        'messOwnerId': messData['ownerId'],
+        'messName': messName,
+        'messOwnerId': messOwnerId,
+        'messPhone': messPhone,
+        'messAddress': messAddress,
+
         'customerId': currentUser.uid,
         'customerEmail': currentUser.email,
+        'customerName': displayName, // ✅ store resolved name
+
         'items': orderItems,
         'totalAmount': totalAmount,
         'status': 'Pending',
         'paymentStatus': 'Unpaid',
+        'pickupTime': pickupTime,
         'orderTime': FieldValue.serverTimestamp(),
         'createdAt': FieldValue.serverTimestamp(),
       });
 
+      // 6) Notify mess (uses customerName and your mipmap icon in service)
       await NotificationService().sendOrderNotificationToMess(
         messId: widget.messId,
-        orderId: orderId,
-        customerEmail: currentUser.email ?? 'Customer',
+        orderId: orderId, // ✅ real id
+        customerName: displayName, // ✅ resolved name
         totalAmount: totalAmount,
       );
 
+      // 7) Clear only this mess cart
       cartNotifier.value = {};
-
       if (mounted) {
-        Navigator.pop(context);
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Order placed successfully! Order ID: $orderId'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-
+        Navigator.pop(context); // close any bottom sheet/dialog
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Order placed: #$orderId')));
+        // Optional: navigate to tracking
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OrderTrackingPage(orderId: orderId),
+            builder: (_) => OrderTrackingPage(orderId: orderId),
           ),
         );
       }
     } catch (e) {
-      print('Error during checkout: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Order failed: $e')));
       }
     }
+  }
+}
+
+// Pickup Time Dialog Widget
+class PickupTimeDialog extends StatefulWidget {
+  final Function(String) onConfirm;
+
+  const PickupTimeDialog({super.key, required this.onConfirm});
+
+  @override
+  State<PickupTimeDialog> createState() => _PickupTimeDialogState();
+}
+
+class _PickupTimeDialogState extends State<PickupTimeDialog> {
+  TimeOfDay? _selectedTime;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('When will you pick up?'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Please select your estimated pickup time',
+            style: TextStyle(color: Colors.grey),
+          ),
+          const SizedBox(height: 24),
+          GestureDetector(
+            onTap: () async {
+              final time = await showTimePicker(
+                context: context,
+                initialTime: TimeOfDay.now(),
+              );
+              if (time != null) {
+                setState(() => _selectedTime = time);
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: const Color.fromARGB(255, 27, 84, 78),
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _selectedTime?.format(context) ?? 'Select time',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const Icon(
+                    Icons.access_time,
+                    color: Color.fromARGB(255, 27, 84, 78),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed:
+              _selectedTime == null
+                  ? null
+                  : () {
+                    Navigator.pop(context);
+                    widget.onConfirm(_selectedTime!.format(context));
+                  },
+          child: const Text('Confirm'),
+        ),
+      ],
+    );
   }
 }

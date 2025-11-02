@@ -3,17 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:Tiffinity/views/pages/admin_pages/order_details_page.dart';
-import 'package:Tiffinity/views/widgets/summary_card.dart';
-import 'package:Tiffinity/views/widgets/search_filter_bar.dart';
 
 class AdminHomePage extends StatefulWidget {
   const AdminHomePage({super.key});
 
   @override
-  State<AdminHomePage> createState() => _AdminHomePageState();
+  State createState() => _AdminHomePageState();
 }
 
-class _AdminHomePageState extends State<AdminHomePage> {
+class _AdminHomePageState extends State {
   String? _messId;
   String _selectedStatus = "All";
   String _searchQuery = "";
@@ -56,7 +54,6 @@ class _AdminHomePageState extends State<AdminHomePage> {
               .collection('users')
               .doc(customerId)
               .get();
-
       if (userDoc.exists) {
         final name = userDoc.data()?['name'] ?? 'Customer';
         _customerNames[customerId] = name;
@@ -108,9 +105,9 @@ class _AdminHomePageState extends State<AdminHomePage> {
             ),
             ListTile(
               leading: const Icon(Icons.access_time),
-              title: const Text("Pending"),
+              title: const Text("Accepted"),
               onTap: () {
-                _applyFilter("Pending");
+                _applyFilter("Accepted");
                 Navigator.pop(context);
               },
             ),
@@ -119,6 +116,14 @@ class _AdminHomePageState extends State<AdminHomePage> {
               title: const Text("Completed"),
               onTap: () {
                 _applyFilter("Completed");
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.cancel),
+              title: const Text("Rejected"),
+              onTap: () {
+                _applyFilter("Rejected");
                 Navigator.pop(context);
               },
             ),
@@ -177,7 +182,6 @@ class _AdminHomePageState extends State<AdminHomePage> {
                         .snapshots(),
                 builder: (context, snapshot) {
                   bool isOnline = snapshot.data?['isOnline'] ?? false;
-
                   return Container(
                     margin: const EdgeInsets.all(16),
                     padding: const EdgeInsets.all(20),
@@ -255,7 +259,8 @@ class _AdminHomePageState extends State<AdminHomePage> {
                   );
                 },
               ),
-              // Summary Card
+
+              // Summary Card with Color Coding
               StreamBuilder<QuerySnapshot>(
                 stream:
                     FirebaseFirestore.instance
@@ -264,16 +269,15 @@ class _AdminHomePageState extends State<AdminHomePage> {
                         .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
-                    return SummaryCard(
-                      totalOrders: 0,
-                      delivered: 0,
-                      pending: 0,
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
+                      child: CircularProgressIndicator(),
                     );
                   }
 
                   final orders = snapshot.data!.docs;
                   final totalOrders = orders.length;
-                  final delivered =
+                  final completed =
                       orders
                           .where(
                             (doc) =>
@@ -282,29 +286,188 @@ class _AdminHomePageState extends State<AdminHomePage> {
                                 'Completed',
                           )
                           .length;
-                  final pending =
+                  final accepted =
                       orders
                           .where(
                             (doc) =>
                                 (doc.data()
                                     as Map<String, dynamic>)['status'] ==
-                                'Pending',
+                                'Accepted',
+                          )
+                          .length;
+                  final rejected =
+                      orders
+                          .where(
+                            (doc) =>
+                                (doc.data()
+                                    as Map<String, dynamic>)['status'] ==
+                                'Rejected',
                           )
                           .length;
 
-                  return SummaryCard(
-                    totalOrders: totalOrders,
-                    delivered: delivered,
-                    pending: pending,
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Column(
+                      children: [
+                        // Total Orders Card
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.blue,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                totalOrders.toString(),
+                                style: const TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Total Orders',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // Summary Row with 3 cards
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.green,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      completed.toString(),
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    const Text(
+                                      'Completed',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.white,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      accepted.toString(),
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    const Text(
+                                      'Accepted',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.white,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      rejected.toString(),
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    const Text(
+                                      'Rejected',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.white,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   );
                 },
               ),
               const SizedBox(height: 16),
-              SearchFilterBar(
-                onSearchChanged: _filterOrders,
-                onFilterPressed: _showFilterOptions,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        onChanged: _filterOrders,
+                        decoration: InputDecoration(
+                          hintText: 'Search...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          prefixIcon: const Icon(Icons.search),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.filter_list),
+                      onPressed: _showFilterOptions,
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 10),
+
               // Orders List
               StreamBuilder<QuerySnapshot>(
                 stream:
@@ -385,7 +548,6 @@ class _AdminHomePageState extends State<AdminHomePage> {
                     itemBuilder: (context, index) {
                       final orderDoc = filteredOrders[index];
                       final order = orderDoc.data() as Map<String, dynamic>;
-
                       String formattedTime = '';
                       if (order['orderTime'] != null) {
                         final timestamp = order['orderTime'] as Timestamp;
@@ -394,15 +556,29 @@ class _AdminHomePageState extends State<AdminHomePage> {
                             '${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
                       }
 
-                      final status = order['status'] ?? 'Pending';
+                      final status = order['status'] ?? 'Accepted';
                       final customerId = order['customerId'];
+
+                      // Color coding based on status
+                      Color statusColor = Colors.orange;
+                      Color statusBgColor = Colors.orange.withOpacity(0.2);
+                      IconData statusIcon = Icons.schedule;
+
+                      if (status == 'Completed') {
+                        statusColor = Colors.green;
+                        statusBgColor = Colors.green.withOpacity(0.2);
+                        statusIcon = Icons.check_circle;
+                      } else if (status == 'Rejected') {
+                        statusColor = Colors.red;
+                        statusBgColor = Colors.red.withOpacity(0.2);
+                        statusIcon = Icons.cancel;
+                      }
 
                       return FutureBuilder<String>(
                         future: _fetchCustomerName(customerId),
                         builder: (context, nameSnapshot) {
                           final customerName =
                               nameSnapshot.data ?? 'Loading...';
-
                           return GestureDetector(
                             onTap: () {
                               Navigator.push(
@@ -410,7 +586,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                                 MaterialPageRoute(
                                   builder:
                                       (context) => OrderDetailsPage(
-                                        orderId: orderDoc.id,
+                                        orderId: order['orderId'],
                                         orderData: order,
                                       ),
                                 ),
@@ -432,20 +608,12 @@ class _AdminHomePageState extends State<AdminHomePage> {
                                     Container(
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
-                                        color:
-                                            status.toLowerCase() == 'pending'
-                                                ? Colors.amber.withOpacity(0.2)
-                                                : Colors.green.withOpacity(0.2),
+                                        color: statusBgColor,
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: Icon(
-                                        status.toLowerCase() == 'pending'
-                                            ? Icons.access_time
-                                            : Icons.check_circle,
-                                        color:
-                                            status.toLowerCase() == 'pending'
-                                                ? Colors.amber[800]
-                                                : Colors.green,
+                                        statusIcon,
+                                        color: statusColor,
                                         size: 32,
                                       ),
                                     ),
@@ -497,19 +665,13 @@ class _AdminHomePageState extends State<AdminHomePage> {
                                         horizontal: 12,
                                       ),
                                       decoration: BoxDecoration(
-                                        color:
-                                            status.toLowerCase() == 'pending'
-                                                ? Colors.amber.withOpacity(0.2)
-                                                : Colors.green.withOpacity(0.2),
+                                        color: statusBgColor,
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
                                         status.toUpperCase(),
                                         style: TextStyle(
-                                          color:
-                                              status.toLowerCase() == 'pending'
-                                                  ? Colors.amber[800]
-                                                  : Colors.green,
+                                          color: statusColor,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 12,
                                         ),

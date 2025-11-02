@@ -15,13 +15,13 @@ class RoleSelectionPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
-              'Are you a Customer or an Admin?',
+              'Are you a Customer or a Mess?', // ✅ Changed
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 40),
             Row(
               children: [
-                // CUSTOMER - No login required upfront
+                // CUSTOMER
                 Expanded(
                   child: Card(
                     elevation: 4,
@@ -31,7 +31,6 @@ class RoleSelectionPage extends StatelessWidget {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(15),
                       onTap: () {
-                        // Customer can browse without login
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(
@@ -67,7 +66,7 @@ class RoleSelectionPage extends StatelessWidget {
                 ),
                 const SizedBox(width: 20),
 
-                // ADMIN - Must login upfront
+                // ✅ MESS (Previously Admin)
                 Expanded(
                   child: Card(
                     elevation: 4,
@@ -77,7 +76,6 @@ class RoleSelectionPage extends StatelessWidget {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(15),
                       onTap: () {
-                        // Admin must login
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -91,13 +89,14 @@ class RoleSelectionPage extends StatelessWidget {
                         child: Column(
                           children: const [
                             Icon(
-                              Icons.admin_panel_settings,
+                              Icons
+                                  .restaurant, // ✅ Changed to chef/restaurant icon
                               size: 48,
                               color: Colors.orange,
                             ),
                             SizedBox(height: 12),
                             Text(
-                              'Admin',
+                              'Mess', // ✅ Changed from 'Admin'
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,

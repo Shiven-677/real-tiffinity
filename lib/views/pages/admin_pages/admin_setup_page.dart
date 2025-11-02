@@ -3,6 +3,9 @@ import 'package:Tiffinity/views/widgets/auth_field.dart';
 import 'package:Tiffinity/views/widgets/auth_gradient_button.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 // Model for a timing slot
 class TimeSlot {
@@ -16,6 +19,7 @@ class TimeSlot {
 
 class AdminSetupPage extends StatefulWidget {
   final String userId;
+
   const AdminSetupPage({super.key, required this.userId});
 
   @override
@@ -27,13 +31,73 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
   final phoneController = TextEditingController();
   final addressController = TextEditingController();
   final descriptionController = TextEditingController();
+
   String _messType = "Veg";
   bool _isLoading = false;
+
+  //Image picker
+  File? _messImage;
+  final ImagePicker _picker = ImagePicker();
 
   // List of time slots (first mandatory)
   List<TimeSlot> timeSlots = [TimeSlot()];
 
+  void _showImageSourceDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Upload Mess Photo'),
+          content: const Text('Choose where to upload photo from:'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _pickMessImageFromDevice();
+              },
+              child: const Text('Device'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _pickMessImageFromCamera();
+              },
+              child: const Text('Camera'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _pickMessImageFromDevice() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        setState(() => _messImage = File(image.path));
+      }
+    } catch (e) {
+      _showError('Error picking image: $e');
+    }
+  }
+
+  Future<void> _pickMessImageFromCamera() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+      if (image != null) {
+        setState(() => _messImage = File(image.path));
+      }
+    } catch (e) {
+      _showError('Error taking photo: $e');
+    }
+  }
+
   Future<void> _saveMessDetails() async {
+    if (_messImage == null) {
+      _showError("Please upload a mess image (Required Field)");
+      return;
+    }
+
     if (messNameController.text.trim().isEmpty ||
         addressController.text.trim().isEmpty ||
         descriptionController.text.trim().isEmpty ||
@@ -50,8 +114,13 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
     setState(() => _isLoading = true);
 
     try {
-      // Generate mess ID based on userId
       final messId = widget.userId;
+
+      final storageRef = FirebaseStorage.instance.ref(
+        'messes/$messId/profile_image',
+      );
+      await storageRef.putFile(_messImage!);
+      final imageUrl = await storageRef.getDownloadURL();
 
       List<Map<String, String>> timings =
           timeSlots.map((slot) {
@@ -70,6 +139,7 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
         'timings': timings,
         'isOnline': true,
         'ownerId': widget.userId,
+        'messImage': imageUrl, //Store image URL
         'createdAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
@@ -150,7 +220,83 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 20),
+
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color:
+                                _messImage == null
+                                    ? Colors.red
+                                    : const Color.fromARGB(255, 27, 84, 78),
+                            width: 2,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.grey[50],
+                        ),
+                        child: Column(
+                          children: [
+                            if (_messImage != null) ...{
+                              Container(
+                                width: double.infinity,
+                                height: 150,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  image: DecorationImage(
+                                    image: FileImage(_messImage!),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            } else ...{
+                              Container(
+                                width: double.infinity,
+                                height: 150,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  color: Colors.grey[200],
+                                ),
+                                child: Icon(
+                                  Icons.restaurant,
+                                  size: 60,
+                                  color: Colors.grey[400],
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            },
+                            ElevatedButton.icon(
+                              onPressed: _showImageSourceDialog,
+                              icon: const Icon(Icons.image),
+                              label: Text(
+                                _messImage == null
+                                    ? 'Upload Mess Image'
+                                    : 'Change Image',
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color.fromARGB(
+                                  255,
+                                  27,
+                                  84,
+                                  78,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            if (_messImage == null)
+                              const Text(
+                                '* Required Field',
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
 
                       // Mess Name
                       AuthField(
@@ -179,48 +325,63 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
                       const SizedBox(height: 20),
 
                       // Mess Type (Vertical Radio Buttons)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          RadioListTile<String>(
-                            title: const Text(
-                              "Veg",
-                              style: TextStyle(fontSize: 18),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Mess Type',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
                             ),
-                            value: "Veg",
-                            groupValue: _messType,
-                            onChanged:
-                                (value) => setState(() => _messType = value!),
-                            contentPadding: EdgeInsets.zero,
-                            visualDensity: const VisualDensity(vertical: -4),
-                          ),
-                          RadioListTile<String>(
-                            title: const Text(
-                              "Non-Veg",
-                              style: TextStyle(fontSize: 18),
+                            RadioListTile(
+                              title: const Text(
+                                "Veg",
+                                style: TextStyle(fontSize: 16),
+                              ),
+                              value: "Veg",
+                              groupValue: _messType,
+                              onChanged:
+                                  (value) => setState(() => _messType = value!),
+                              contentPadding: EdgeInsets.zero,
+                              visualDensity: const VisualDensity(vertical: -4),
                             ),
-                            value: "Non-Veg",
-                            groupValue: _messType,
-                            onChanged:
-                                (value) => setState(() => _messType = value!),
-                            contentPadding: EdgeInsets.zero,
-                            visualDensity: const VisualDensity(vertical: -4),
-                          ),
-                          RadioListTile<String>(
-                            title: const Text(
-                              "Both",
-                              style: TextStyle(fontSize: 18),
+                            RadioListTile(
+                              title: const Text(
+                                "Non-Veg",
+                                style: TextStyle(fontSize: 16),
+                              ),
+                              value: "Non-Veg",
+                              groupValue: _messType,
+                              onChanged:
+                                  (value) => setState(() => _messType = value!),
+                              contentPadding: EdgeInsets.zero,
+                              visualDensity: const VisualDensity(vertical: -4),
                             ),
-                            value: "Both",
-                            groupValue: _messType,
-                            onChanged:
-                                (value) => setState(() => _messType = value!),
-                            contentPadding: EdgeInsets.zero,
-                            visualDensity: const VisualDensity(vertical: -4),
-                          ),
-                        ],
+                            RadioListTile(
+                              title: const Text(
+                                "Both",
+                                style: TextStyle(fontSize: 16),
+                              ),
+                              value: "Both",
+                              groupValue: _messType,
+                              onChanged:
+                                  (value) => setState(() => _messType = value!),
+                              contentPadding: EdgeInsets.zero,
+                              visualDensity: const VisualDensity(vertical: -4),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 20),
 
                       // Timing Slots
                       Column(
@@ -323,7 +484,7 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
                             ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
 
                       // Address
                       AuthField(
@@ -331,7 +492,7 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
                         icon: Icons.location_on,
                         controller: addressController,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),

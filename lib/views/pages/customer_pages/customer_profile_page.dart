@@ -215,41 +215,6 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
           ),
           const SizedBox(height: 32),
 
-          // ✅ DARK MODE TOGGLE ADDED HERE
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: ValueListenableBuilder<bool>(
-              valueListenable: isDarkModeNotifier,
-              builder: (context, isDarkMode, child) {
-                return SwitchListTile(
-                  title: const Text(
-                    'Dark Mode',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  subtitle: Text(
-                    isDarkMode ? 'Enabled' : 'Disabled',
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                  secondary: Icon(
-                    isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                    color: const Color.fromARGB(255, 27, 84, 78),
-                  ),
-                  value: isDarkMode,
-                  onChanged: (bool value) async {
-                    isDarkModeNotifier.value = value;
-                    final SharedPreferences prefs =
-                        await SharedPreferences.getInstance();
-                    await prefs.setBool(KConstants.themeModeKey, value);
-                  },
-                  activeColor: const Color.fromARGB(255, 27, 84, 78),
-                );
-              },
-            ),
-          ),
           const SizedBox(height: 24),
 
           // Save Profile Button
@@ -304,34 +269,6 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
               style: TextStyle(color: Colors.grey),
             ),
             const SizedBox(height: 32),
-
-            // ✅ DARK MODE TOGGLE FOR GUESTS
-            Container(
-              padding: const EdgeInsets.all(16),
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: ValueListenableBuilder<bool>(
-                valueListenable: isDarkModeNotifier,
-                builder: (context, isDarkMode, child) {
-                  return SwitchListTile(
-                    title: const Text('Dark Mode'),
-                    secondary: Icon(
-                      isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                    ),
-                    value: isDarkMode,
-                    onChanged: (bool value) async {
-                      isDarkModeNotifier.value = value;
-                      final SharedPreferences prefs =
-                          await SharedPreferences.getInstance();
-                      await prefs.setBool(KConstants.themeModeKey, value);
-                    },
-                  );
-                },
-              ),
-            ),
             const SizedBox(height: 24),
 
             ElevatedButton.icon(

@@ -35,7 +35,7 @@ class NotificationService {
 
     // Initialize local notifications
     const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@mipmap/launcher_icon'); // app logo
 
     const DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings(
@@ -170,7 +170,7 @@ class NotificationService {
   Future<void> sendOrderNotificationToMess({
     required String messId,
     required String orderId,
-    required String customerEmail,
+    required String customerName,
     required double totalAmount,
   }) async {
     try {
@@ -194,7 +194,7 @@ class NotificationService {
         'fcmToken': fcmToken,
         'title': '🔔 New Order Received!',
         'body':
-            'Order #$orderId from $customerEmail - ₹${totalAmount.toStringAsFixed(0)}',
+            'Order #$orderId from $customerName - ₹${totalAmount.toStringAsFixed(0)}',
         'orderId': orderId,
         'type': 'new_order',
         'createdAt': FieldValue.serverTimestamp(),

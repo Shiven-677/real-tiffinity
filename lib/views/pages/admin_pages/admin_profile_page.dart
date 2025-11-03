@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:Tiffinity/services/image_service.dart';
 import 'dart:io';
 
 class AdminProfilePage extends StatefulWidget {
@@ -85,17 +85,73 @@ class _AdminProfilePageState extends State {
     );
   }
 
-  Future<void> _pickImageFromGallery() async {
+  Future _pickImageFromGallery() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
-      setState(() => _selectedImage = File(image.path));
+      final file = File(image.path);
+      final fileSize = await file.length();
+      final fileSizeMB = fileSize / 1024 / 1024;
+      if (fileSize > 32 * 1024 * 1024) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '❌ Image too large: ${fileSizeMB.toStringAsFixed(2)}MB\nMax: 32MB allowed',
+              ),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
+      setState(() => _selectedImage = file);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '✅ Image selected: ${fileSizeMB.toStringAsFixed(2)}MB',
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
-  Future<void> _pickImageFromCamera() async {
+  Future _pickImageFromCamera() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
     if (image != null) {
-      setState(() => _selectedImage = File(image.path));
+      final file = File(image.path);
+      final fileSize = await file.length();
+      final fileSizeMB = fileSize / 1024 / 1024;
+      if (fileSize > 32 * 1024 * 1024) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '❌ Image too large: ${fileSizeMB.toStringAsFixed(2)}MB\nMax: 32MB allowed',
+              ),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
+      setState(() => _selectedImage = file);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '✅ Image selected: ${fileSizeMB.toStringAsFixed(2)}MB',
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
@@ -113,11 +169,38 @@ class _AdminProfilePageState extends State {
       };
 
       if (_selectedImage != null) {
-        final ref = FirebaseStorage.instance.ref(
-          'messes/$userId/profile_image',
-        );
-        await ref.putFile(_selectedImage!);
-        updateData['messImage'] = await ref.getDownloadURL();
+        print('🖼️ Uploading profile image...');
+        final imageUrl = await ImageService.uploadToImgBB(_selectedImage!);
+
+        if (imageUrl == 'SIZE_EXCEEDED') {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('❌ Image too large! Maximum 32MB allowed.'),
+                backgroundColor: Colors.red,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+          setState(() => _isSaving = false);
+          return;
+        }
+
+        if (imageUrl == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('❌ Image upload failed. Check internet.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          setState(() => _isSaving = false);
+          return;
+        }
+
+        updateData['messImage'] = imageUrl;
+        _selectedImage = null;
       }
 
       await FirebaseFirestore.instance

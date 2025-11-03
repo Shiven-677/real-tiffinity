@@ -43,4 +43,46 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Environment variables (IMPORTANT - Never commit these)
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# Firebase/Service account keys (IMPORTANT - Never commit these)
 lib/data/notification_services/serviceAccount.json
+**/serviceAccount.json
+google-services.json
+GoogleService-Info.plist
+
+# API Keys and Credentials
+*.key
+*.pem
+*.p12
+*.jks
+
+# Local configuration files
+local.properties
+gradle.properties
+
+# iOS/macOS
+ios/Pods/
+ios/Flutter/GeneratedPluginRegistrant.swift
+macos/Flutter/GeneratedPluginRegistrant.swift
+
+# Web
+web/
+.dart_tool/
+
+# Logs
+*.log
+
+# Generated files
+.dart_tool/
+.flutter-plugins
+.packages
+
+# Misc
+.DS_Store

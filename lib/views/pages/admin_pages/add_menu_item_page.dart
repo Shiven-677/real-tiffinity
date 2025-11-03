@@ -1,7 +1,7 @@
 import 'package:Tiffinity/views/widgets/auth_field.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:Tiffinity/services/image_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
@@ -73,22 +73,78 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
     );
   }
 
-  Future<void> _pickFoodImageFromGallery() async {
+  Future _pickFoodImageFromGallery() async {
     try {
       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
       if (image != null) {
-        setState(() => _foodImage = File(image.path));
+        final file = File(image.path);
+        final fileSize = await file.length();
+        final fileSizeMB = fileSize / 1024 / 1024;
+        if (fileSize > 32 * 1024 * 1024) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  '❌ Image too large: ${fileSizeMB.toStringAsFixed(2)}MB\nMax: 32MB allowed',
+                ),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+          return;
+        }
+        setState(() => _foodImage = file);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '✅ Image selected: ${fileSizeMB.toStringAsFixed(2)}MB',
+              ),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
       }
     } catch (e) {
       _showError('Error picking image: $e');
     }
   }
 
-  Future<void> _pickFoodImageFromCamera() async {
+  Future _pickFoodImageFromCamera() async {
     try {
       final XFile? image = await _picker.pickImage(source: ImageSource.camera);
       if (image != null) {
-        setState(() => _foodImage = File(image.path));
+        final file = File(image.path);
+        final fileSize = await file.length();
+        final fileSizeMB = fileSize / 1024 / 1024;
+        if (fileSize > 32 * 1024 * 1024) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  '❌ Image too large: ${fileSizeMB.toStringAsFixed(2)}MB\nMax: 32MB allowed',
+                ),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+          return;
+        }
+        setState(() => _foodImage = file);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '✅ Image selected: ${fileSizeMB.toStringAsFixed(2)}MB',
+              ),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
       }
     } catch (e) {
       _showError('Error taking photo: $e');
@@ -117,15 +173,38 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
     setState(() => _isLoading = true);
 
     try {
-      String? foodImageUrl;
+      String? foodImageUrl = widget.existingImageUrl;
 
       if (_foodImage != null) {
-        final itemName = _nameController.text.trim();
-        final storageRef = FirebaseStorage.instance.ref(
-          'messes/${widget.messId}/items/$itemName',
-        );
-        await storageRef.putFile(_foodImage!);
-        foodImageUrl = await storageRef.getDownloadURL();
+        print('🖼️ Uploading menu item image...');
+        foodImageUrl = await ImageService.uploadToImgBB(_foodImage!);
+
+        if (foodImageUrl == 'SIZE_EXCEEDED') {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('❌ Image too large! Maximum 32MB allowed.'),
+                backgroundColor: Colors.red,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+          setState(() => _isLoading = false);
+          return;
+        }
+
+        if (foodImageUrl == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('❌ Image upload failed. Check internet.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          setState(() => _isLoading = false);
+          return;
+        }
       }
 
       final menuItem = {

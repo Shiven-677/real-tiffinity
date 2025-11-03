@@ -3,7 +3,7 @@ import 'package:Tiffinity/views/widgets/auth_field.dart';
 import 'package:Tiffinity/views/widgets/auth_gradient_button.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:Tiffinity/services/image_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
@@ -70,22 +70,78 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
     );
   }
 
-  Future<void> _pickMessImageFromDevice() async {
+  Future _pickMessImageFromDevice() async {
     try {
       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
       if (image != null) {
-        setState(() => _messImage = File(image.path));
+        final file = File(image.path);
+        final fileSize = await file.length();
+        final fileSizeMB = fileSize / 1024 / 1024;
+        if (fileSize > 32 * 1024 * 1024) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  '❌ Image too large: ${fileSizeMB.toStringAsFixed(2)}MB\nMax: 32MB allowed',
+                ),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+          return;
+        }
+        setState(() => _messImage = file);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '✅ Image selected: ${fileSizeMB.toStringAsFixed(2)}MB',
+              ),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
       }
     } catch (e) {
       _showError('Error picking image: $e');
     }
   }
 
-  Future<void> _pickMessImageFromCamera() async {
+  Future _pickMessImageFromCamera() async {
     try {
       final XFile? image = await _picker.pickImage(source: ImageSource.camera);
       if (image != null) {
-        setState(() => _messImage = File(image.path));
+        final file = File(image.path);
+        final fileSize = await file.length();
+        final fileSizeMB = fileSize / 1024 / 1024;
+        if (fileSize > 32 * 1024 * 1024) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  '❌ Image too large: ${fileSizeMB.toStringAsFixed(2)}MB\nMax: 32MB allowed',
+                ),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+          return;
+        }
+        setState(() => _messImage = file);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '✅ Image selected: ${fileSizeMB.toStringAsFixed(2)}MB',
+              ),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
       }
     } catch (e) {
       _showError('Error taking photo: $e');
@@ -116,11 +172,38 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
     try {
       final messId = widget.userId;
 
-      final storageRef = FirebaseStorage.instance.ref(
-        'messes/$messId/profile_image',
-      );
-      await storageRef.putFile(_messImage!);
-      final imageUrl = await storageRef.getDownloadURL();
+      String? imageUrl;
+      if (_messImage != null) {
+        print('🖼️ Uploading mess image...');
+        imageUrl = await ImageService.uploadToImgBB(_messImage!);
+
+        if (imageUrl == 'SIZE_EXCEEDED') {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('❌ Image too large! Maximum 32MB allowed.'),
+                backgroundColor: Colors.red,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+          setState(() => _isLoading = false);
+          return;
+        }
+
+        if (imageUrl == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('❌ Image upload failed. Check internet.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          setState(() => _isLoading = false);
+          return;
+        }
+      }
 
       List<Map<String, String>> timings =
           timeSlots.map((slot) {
@@ -139,7 +222,7 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
         'timings': timings,
         'isOnline': true,
         'ownerId': widget.userId,
-        'messImage': imageUrl, //Store image URL
+        if (imageUrl != null) 'messImage': imageUrl, // only when uploaded
         'createdAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 

@@ -3,18 +3,20 @@ import 'package:Tiffinity/data/notifiers.dart';
 import 'package:Tiffinity/views/auth/welcome_page.dart';
 import 'package:Tiffinity/views/pages/admin_pages/admin_widget_tree.dart';
 import 'package:Tiffinity/views/pages/customer_pages/customer_widget_tree.dart';
-import 'package:Tiffinity/services/notification_service.dart'; // 🔔 ADD THIS
+import 'package:Tiffinity/services/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
 
-  // 🔔 Initialize notification service
+  await dotenv.load();
+
+  await Firebase.initializeApp();
   await NotificationService().initialize();
 
   runApp(const MyApp());

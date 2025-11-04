@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:Tiffinity/views/pages/admin_pages/order_details_page.dart';
+import 'package:Tiffinity/services/notification_service.dart';
 
 class AdminHomePage extends StatefulWidget {
   const AdminHomePage({super.key});
@@ -17,10 +18,27 @@ class _AdminHomePageState extends State {
   String _searchQuery = "";
   Map<String, String> _customerNames = {};
 
+  static bool _notificationsInitialized = false;
+
   @override
   void initState() {
     super.initState();
     _fetchMessId();
+    _initializeNotificationsOnce();
+  }
+
+  Future<void> _initializeNotificationsOnce() async {
+    if (_notificationsInitialized) return;
+
+    _notificationsInitialized = true;
+
+    try {
+      await NotificationService().initialize();
+      await NotificationService().saveTokenToFirestore();
+      debugPrint('✅ Notifications initialized for admin');
+    } catch (e) {
+      debugPrint('❌ Error initializing notifications: $e');
+    }
   }
 
   Future<void> _fetchMessId() async {
@@ -261,12 +279,17 @@ class _AdminHomePageState extends State {
               ),
 
               // Summary Card with Color Coding
-              StreamBuilder<QuerySnapshot>(
+              StreamBuilder(
                 stream:
                     FirebaseFirestore.instance
                         .collection('orders')
-                        .where('messId', isEqualTo: _messId)
+                        .where(
+                          'messOwnerId',
+                          isEqualTo: FirebaseAuth.instance.currentUser!.uid,
+                        )
+                        .orderBy('createdAt', descending: true)
                         .snapshots(),
+
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return const Padding(
@@ -469,13 +492,17 @@ class _AdminHomePageState extends State {
               const SizedBox(height: 10),
 
               // Orders List
-              StreamBuilder<QuerySnapshot>(
+              StreamBuilder(
                 stream:
                     FirebaseFirestore.instance
                         .collection('orders')
-                        .where('messId', isEqualTo: _messId)
+                        .where(
+                          'messOwnerId',
+                          isEqualTo: FirebaseAuth.instance.currentUser!.uid,
+                        )
                         .orderBy('createdAt', descending: true)
                         .snapshots(),
+
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());

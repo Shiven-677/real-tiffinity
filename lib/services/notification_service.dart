@@ -65,7 +65,14 @@ class NotificationService {
   }
 
   // Save FCM token to Firestore for the logged-in mess owner
+  // Save FCM token ONCE - use a static flag to prevent duplicate saves
+  static bool _tokenSaveInitialized = false;
+
   Future<void> saveTokenToFirestore() async {
+    if (_tokenSaveInitialized) return; // Already initialized - skip
+
+    _tokenSaveInitialized = true;
+
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
@@ -81,22 +88,24 @@ class NotificationService {
             .get();
 
     if (messQuery.docs.isNotEmpty) {
-      await messQuery.docs.first.reference.update({
+      final messRef = messQuery.docs.first.reference;
+
+      // Save token ONCE
+      await messRef.update({
         'fcmToken': token,
         'tokenUpdatedAt': FieldValue.serverTimestamp(),
       });
-      print('FCM Token saved: $token');
-    }
+      print('✅ FCM Token saved: $token');
 
-    // Listen for token refresh
-    _firebaseMessaging.onTokenRefresh.listen((newToken) async {
-      if (messQuery.docs.isNotEmpty) {
-        await messQuery.docs.first.reference.update({
+      // Listen for token REFRESH ONLY ONCE (outside async)
+      _firebaseMessaging.onTokenRefresh.listen((newToken) async {
+        await messRef.update({
           'fcmToken': newToken,
           'tokenUpdatedAt': FieldValue.serverTimestamp(),
         });
-      }
-    });
+        print('🔄 FCM Token refreshed: $newToken');
+      });
+    }
   }
 
   // Handle foreground messages with loud notification

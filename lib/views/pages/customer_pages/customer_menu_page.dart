@@ -6,6 +6,7 @@ import 'package:Tiffinity/data/constants.dart';
 import 'package:Tiffinity/services/notification_service.dart';
 import 'package:Tiffinity/views/widgets/checkout_login_dialog.dart';
 import 'order_tracking_page.dart';
+import 'package:Tiffinity/utils/order_id_generator.dart';
 
 class MenuPage extends StatefulWidget {
   final String messId;
@@ -1140,8 +1141,10 @@ class _MenuPageState extends State<MenuPage> {
 
       // 4) Create order id and references
       final ordersCol = FirebaseFirestore.instance.collection('orders');
-      final orderRef = ordersCol.doc();
-      final orderId = orderRef.id;
+      final customOrderId =
+          OrderIDGenerator.generateOrderID(); // Generate custom ID
+      final orderRef = ordersCol.doc(customOrderId); // Use custom ID as doc ID
+      final orderId = customOrderId;
 
       // 5) Persist order document
       await orderRef.set({

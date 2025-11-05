@@ -137,29 +137,58 @@ class _MenuPageState extends State<MenuPage> {
                     ),
                     child: Stack(
                       children: [
-                        Container(
-                          color: const Color.fromARGB(
-                            255,
-                            27,
-                            84,
-                            78,
-                          ).withOpacity(0.8),
-                          child: const Center(
-                            child: Icon(
-                              Icons.restaurant_menu,
-                              size: 80,
-                              color: Colors.white54,
+                        // ✅ DISPLAY MESS IMAGE IF AVAILABLE
+                        if (messData['messImage'] != null &&
+                            messData['messImage'].toString().isNotEmpty)
+                          Positioned.fill(
+                            child: Image.network(
+                              messData['messImage'].toString(),
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: const Color.fromARGB(
+                                    255,
+                                    27,
+                                    84,
+                                    78,
+                                  ).withOpacity(0.8),
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.restaurant_menu,
+                                      size: 80,
+                                      color: Colors.white54,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          )
+                        else
+                          // ✅ FALLBACK PLACEHOLDER IF NO IMAGE
+                          Container(
+                            color: const Color.fromARGB(
+                              255,
+                              27,
+                              84,
+                              78,
+                            ).withOpacity(0.8),
+                            child: const Center(
+                              child: Icon(
+                                Icons.restaurant_menu,
+                                size: 80,
+                                color: Colors.white54,
+                              ),
                             ),
                           ),
-                        ),
+                        // DARK GRADIENT OVERLAY ON TOP
                         Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.black.withOpacity(0.3),
-                                Colors.black.withOpacity(0.7),
+                                Colors.black.withOpacity(0.2),
+                                Colors.black.withOpacity(0.6),
                               ],
                             ),
                           ),
@@ -170,7 +199,7 @@ class _MenuPageState extends State<MenuPage> {
                 ),
               ),
 
-              // ✅ MESS INFO SECTION - WITH DARK MODE
+              // MESS INFO SECTION
               SliverToBoxAdapter(
                 child: Container(
                   color: Colors.white,
@@ -253,7 +282,7 @@ class _MenuPageState extends State<MenuPage> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '1.50 km',
+                            '1.0 km',
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 14,
@@ -280,7 +309,7 @@ class _MenuPageState extends State<MenuPage> {
                 ),
               ),
 
-              // ✅ SEARCH AND FILTER SECTION - WITH DARK MODE
+              // SEARCH AND FILTER SECTION
               SliverToBoxAdapter(
                 child: Container(
                   color: Colors.white,
@@ -358,7 +387,7 @@ class _MenuPageState extends State<MenuPage> {
             ],
           ),
 
-          // ✅ FLOATING CART BUTTON - NO BACKGROUND CONTAINER
+          // FLOATING CART BUTTON
           floatingActionButton: ValueListenableBuilder<Map<String, CartItem>>(
             valueListenable: cartNotifier,
             builder: (context, cart, _) {
@@ -518,12 +547,14 @@ class _MenuPageState extends State<MenuPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Veg/Non-veg symbol
+              // ✅ Veg/Non-veg symbol - Jain shows Veg logo
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child:
-                    data['type']?.toString() == 'Veg'
-                        ? Symbols.vegSymbol
+                    (data['type']?.toString() == 'Veg' ||
+                            data['type']?.toString() == 'Jain')
+                        ? Symbols
+                            .vegSymbol // ✅ Jain uses Veg symbol
                         : Symbols.nonVegSymbol,
               ),
               const SizedBox(width: 12),
@@ -533,14 +564,42 @@ class _MenuPageState extends State<MenuPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      data['name']?.toString() ?? 'Unknown Item',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
-                      ),
+                    // Item name with Jain label if applicable
+                    Wrap(
+                      spacing: 4,
+                      alignment: WrapAlignment.start,
+                      children: [
+                        Text(
+                          data['name']?.toString() ?? 'Unknown Item',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                        ),
+                        // Show Jain badge if type is Jain
+                        if (data['type']?.toString() == 'Jain')
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color.fromARGB(255, 27, 84, 78),
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                            child: const Text(
+                              'Jain',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
+
                     const SizedBox(height: 4),
 
                     Text(
@@ -693,18 +752,64 @@ class _MenuPageState extends State<MenuPage> {
               ),
               const SizedBox(width: 12),
 
-              // Food Image placeholder
+              // Food Image with actual image from Firestore
               Container(
                 width: 100,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  Icons.restaurant,
-                  color: Colors.grey[400],
-                  size: 40,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child:
+                      data['foodImage'] != null &&
+                              data['foodImage'].toString().isNotEmpty
+                          ? Image.network(
+                            data['foodImage'].toString(),
+                            width: 100,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey[200],
+                                child: Icon(
+                                  Icons.restaurant,
+                                  color: Colors.grey[400],
+                                  size: 40,
+                                ),
+                              );
+                            },
+                            loadingBuilder: (context, child, progress) {
+                              if (progress == null) return child;
+                              return Container(
+                                color: Colors.grey[200],
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: const Color.fromARGB(
+                                      255,
+                                      27,
+                                      84,
+                                      78,
+                                    ),
+                                    value:
+                                        progress.expectedTotalBytes != null
+                                            ? progress.cumulativeBytesLoaded /
+                                                progress.expectedTotalBytes!
+                                            : null,
+                                  ),
+                                ),
+                              );
+                            },
+                          )
+                          : Container(
+                            color: Colors.grey[200],
+                            child: Icon(
+                              Icons.restaurant,
+                              color: Colors.grey[400],
+                              size: 40,
+                            ),
+                          ),
                 ),
               ),
             ],

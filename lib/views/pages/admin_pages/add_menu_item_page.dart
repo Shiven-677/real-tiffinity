@@ -6,10 +6,10 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
 class AddMenuItemPage extends StatefulWidget {
-  final Map? existingItem; // optional for editing
-  final String messId; // ✅ required
-  final String? menuId; // ✅ optional for editing
-  final String? existingImageUrl; // ✅ Task 8 - for editing
+  final Map? existingItem;
+  final String messId;
+  final String? menuId;
+  final String? existingImageUrl;
 
   const AddMenuItemPage({
     super.key,
@@ -20,7 +20,7 @@ class AddMenuItemPage extends StatefulWidget {
   });
 
   @override
-  State<AddMenuItemPage> createState() => _AddMenuItemPageState();
+  State createState() => _AddMenuItemPageState();
 }
 
 class _AddMenuItemPageState extends State<AddMenuItemPage> {
@@ -29,19 +29,20 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
   final _descriptionController = TextEditingController();
   String _type = "Veg";
   bool _isLoading = false;
-
   File? _foodImage;
+  String? _existingImageUrl;
   final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
-    // Pre-fill when editing
     if (widget.existingItem != null) {
       _nameController.text = widget.existingItem!['name'] ?? '';
       _priceController.text = widget.existingItem!['price'].toString();
       _descriptionController.text = widget.existingItem!['description'] ?? '';
       _type = widget.existingItem!['type'] ?? "Veg";
+      _existingImageUrl = widget.existingItem!['foodImage']?.toString();
+      print('📸 Existing image URL loaded from item: $_existingImageUrl');
     }
   }
 
@@ -73,13 +74,14 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
     );
   }
 
-  Future _pickFoodImageFromGallery() async {
+  Future<void> _pickFoodImageFromGallery() async {
     try {
       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
       if (image != null) {
         final file = File(image.path);
         final fileSize = await file.length();
         final fileSizeMB = fileSize / 1024 / 1024;
+
         if (fileSize > 32 * 1024 * 1024) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -94,6 +96,7 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
           }
           return;
         }
+
         setState(() => _foodImage = file);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -112,13 +115,14 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
     }
   }
 
-  Future _pickFoodImageFromCamera() async {
+  Future<void> _pickFoodImageFromCamera() async {
     try {
       final XFile? image = await _picker.pickImage(source: ImageSource.camera);
       if (image != null) {
         final file = File(image.path);
         final fileSize = await file.length();
         final fileSizeMB = fileSize / 1024 / 1024;
+
         if (fileSize > 32 * 1024 * 1024) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -133,6 +137,7 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
           }
           return;
         }
+
         setState(() => _foodImage = file);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -171,7 +176,6 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
     }
 
     setState(() => _isLoading = true);
-
     try {
       String? foodImageUrl = widget.existingImageUrl;
 
@@ -222,10 +226,8 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
           .collection('menu');
 
       if (widget.menuId != null) {
-        // Update existing
         await menuRef.doc(widget.menuId).update(menuItem);
       } else {
-        // Add new
         await menuRef.add({
           ...menuItem,
           'createdAt': FieldValue.serverTimestamp(),
@@ -233,7 +235,6 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
       }
 
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -244,7 +245,6 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
           backgroundColor: Colors.green,
         ),
       );
-
       Navigator.pop(context, menuItem);
     } catch (e) {
       _showError("Error: $e");
@@ -256,7 +256,6 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.existingItem != null;
-
     return Scaffold(
       appBar: AppBar(
         title: Text(isEditing ? "Edit Menu Item" : "Add Menu Item"),
@@ -267,15 +266,12 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
-            // Item Name
             AuthField(
               hintText: "Item Name",
               icon: Icons.fastfood,
               controller: _nameController,
             ),
             const SizedBox(height: 16),
-
-            // Price
             AuthField(
               hintText: "Price (₹)",
               icon: Icons.currency_rupee,
@@ -283,15 +279,12 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 16),
-
-            // Description
             AuthField(
               hintText: "Description",
               icon: Icons.description,
               controller: _descriptionController,
             ),
             const SizedBox(height: 16),
-
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -320,15 +313,18 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                  } else if (isEditing && widget.existingImageUrl != null) ...{
+                  } else if (isEditing && _existingImageUrl != null) ...{
                     Container(
                       width: double.infinity,
                       height: 180,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
                         image: DecorationImage(
-                          image: NetworkImage(widget.existingImageUrl!),
+                          image: NetworkImage(_existingImageUrl!),
                           fit: BoxFit.cover,
+                          onError: (exception, stackTrace) {
+                            print('❌ Error loading image: $exception');
+                          },
                         ),
                       ),
                     ),
@@ -358,7 +354,7 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
                           : 'Change Image',
                     ),
                     style: ElevatedButton.styleFrom(
-                      foregroundColor: const Color.fromARGB(255, 255, 255, 255),
+                      foregroundColor: Colors.white,
                       backgroundColor: const Color.fromARGB(255, 27, 84, 78),
                     ),
                   ),
@@ -381,8 +377,6 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // Veg / Non-Veg / Jain
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -428,8 +422,6 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
               ),
             ),
             const SizedBox(height: 30),
-
-            // Save / Add button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -453,9 +445,7 @@ class _AddMenuItemPageState extends State<AddMenuItemPage> {
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
+                            valueColor: AlwaysStoppedAnimation(Colors.white),
                           ),
                         )
                         : Text(

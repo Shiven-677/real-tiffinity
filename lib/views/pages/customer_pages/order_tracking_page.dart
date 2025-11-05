@@ -17,10 +17,8 @@ class OrderTrackingPage extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, size: 22),
           onPressed: () {
-            // Navigate directly to CustomerWidgetTree (home page)
-            Navigator.of(
-              context,
-            ).pushNamedAndRemoveUntil('/', (route) => false);
+            // GO BACK TO ORDERS PAGE
+            Navigator.pop(context);
           },
         ),
 

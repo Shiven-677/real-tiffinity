@@ -39,9 +39,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream:
-                  FirebaseFirestore.instance
-                      .collection('messes')
-                      .snapshots(), // ✅ Remove the .where() filter initially
+                  FirebaseFirestore.instance.collection('messes').snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -138,8 +136,8 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                     return CardWidget(
                       title: mess['messName'] ?? 'Unnamed',
                       description: mess['description'] ?? 'No description',
-                      ratings: '4.5', // You can add ratings field later
-                      distance: '1.0', // You can calculate distance later
+                      ratings: '4.5',
+                      distance: '1.0',
                       isVeg:
                           (mess['messType'] ?? 'Veg')
                               .toString()

@@ -451,10 +451,10 @@ class _AdminSetupPageState extends State<AdminSetupPage> {
                             ),
                             RadioListTile(
                               title: const Text(
-                                "Both",
+                                "Veg | Non-Veg",
                                 style: TextStyle(fontSize: 16),
                               ),
-                              value: "Both",
+                              value: "Veg | Non-Veg",
                               groupValue: _messType,
                               onChanged:
                                   (value) => setState(() => _messType = value!),

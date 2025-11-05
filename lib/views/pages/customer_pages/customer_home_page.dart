@@ -144,6 +144,10 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                               .toLowerCase() ==
                           'veg',
                       messId: messDoc.id,
+                      messImage: mess['messImage']?.toString(),
+                      phone: mess['phone']?.toString(),
+                      address: mess['address']?.toString(),
+                      messType: mess['messType']?.toString(),
                     );
                   },
                 );

@@ -11,10 +11,10 @@ class CardWidget extends StatelessWidget {
     required this.distance,
     required this.isVeg,
     required this.messId,
-    this.messImage, // ✅ Task 10 - Mess image
-    this.phone, // ✅ Task 11 - Mess phone
-    this.address, // ✅ Task 11 - Mess address
-    this.messType, // ✅ Task 11 - Mess type
+    this.messImage,
+    this.phone,
+    this.address,
+    this.messType,
   });
 
   final String title;
@@ -23,10 +23,10 @@ class CardWidget extends StatelessWidget {
   final String distance;
   final bool isVeg;
   final String messId;
-  final String? messImage; // ✅ Task 10
-  final String? phone; // ✅ Task 11
-  final String? address; // ✅ Task 11
-  final String? messType; // ✅ Task 11
+  final String? messImage;
+  final String? phone;
+  final String? address;
+  final String? messType;
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +56,7 @@ class CardWidget extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ✅ Task 10 - Display Mess Image (Zomato Style)
+                // Display Mess Image
                 Stack(
                   children: [
                     ClipRRect(
@@ -181,7 +181,7 @@ class CardWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
 
-                      // ✅ Task 11 - Mess Type (Veg/Non-Veg/Both)
+                      //  Mess Type (Veg/Non-Veg/Both)
                       if (messType != null)
                         Text(
                           messType!,
@@ -303,7 +303,7 @@ class CardWidget extends StatelessWidget {
 
                       const SizedBox(height: 10),
 
-                      // ✅ Task 11 - Contact Information Section
+                      // Contact Information Section
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(

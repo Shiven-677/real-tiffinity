@@ -4,6 +4,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:Tiffinity/services/auth_services.dart';
 
+// ✅ Create a function to manage the flag
+bool _isCheckoutLoginGlobal = false;
+
+void setCheckoutLoginFlagGlobal(bool value) {
+  _isCheckoutLoginGlobal = value;
+}
+
 class CheckoutLoginDialog extends StatefulWidget {
   final VoidCallback onLoginSuccess;
 
@@ -16,65 +23,90 @@ class CheckoutLoginDialog extends StatefulWidget {
 class _CheckoutLoginDialogState extends State<CheckoutLoginDialog> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+
   final AuthService _authService = AuthService();
 
   bool _isLoading = false;
   bool _isSignUp = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
+    nameController.dispose();
+    phoneController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleAuth() async {
-    if (emailController.text.trim().isEmpty ||
-        passwordController.text.trim().isEmpty) {
-      _showSnackBar('Please fill all fields');
-      return;
+  Future<void> handleAuth() async {
+    if (_isSignUp) {
+      if (nameController.text.trim().isEmpty ||
+          phoneController.text.trim().isEmpty ||
+          emailController.text.trim().isEmpty ||
+          passwordController.text.trim().isEmpty) {
+        showSnackBar('Please fill all fields');
+        return;
+      }
+    } else {
+      if (emailController.text.trim().isEmpty ||
+          passwordController.text.trim().isEmpty) {
+        showSnackBar('Please fill all fields');
+        return;
+      }
     }
 
     setState(() => _isLoading = true);
 
     try {
+      // ✅ Set flag to prevent navigation
+      setCheckoutLoginFlagGlobal(true);
+
       UserCredential userCredential;
 
       if (_isSignUp) {
-        // Sign Up
         userCredential = await _authService.signUp(
           email: emailController.text.trim(),
           password: passwordController.text.trim(),
         );
       } else {
-        // Sign In
         userCredential = await _authService.signIn(
           email: emailController.text.trim(),
           password: passwordController.text.trim(),
         );
       }
 
-      await _handleLogin(userCredential);
-    } on AuthException catch (e) {
+      if (mounted) {
+        await handleLogin(userCredential);
+      }
+    } on FirebaseAuthException catch (e) {
+      setCheckoutLoginFlagGlobal(false);
       setState(() => _isLoading = false);
-      _showSnackBar(e.message);
+      if (mounted) {
+        showSnackBar(e.message ?? 'Authentication failed');
+      }
     } catch (e) {
+      setCheckoutLoginFlagGlobal(false);
       setState(() => _isLoading = false);
-      _showSnackBar(e.toString());
+      if (mounted) {
+        showSnackBar(e.toString());
+      }
     }
   }
 
-  Future<void> _handleLogin(UserCredential userCredential) async {
+  Future<void> handleLogin(UserCredential userCredential) async {
     final uid = userCredential.user!.uid;
     final email = userCredential.user!.email!;
 
-    // Check if user exists
     DocumentSnapshot userDoc =
         await FirebaseFirestore.instance.collection('users').doc(uid).get();
 
-    if (!userDoc.exists || _isSignUp) {
-      // Create or update user profile
+    if (!userDoc.exists) {
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'name': _isSignUp ? nameController.text.trim() : 'Customer',
+        'phone': _isSignUp ? phoneController.text.trim() : '',
         'email': email,
         'role': 'customer',
         'createdAt': FieldValue.serverTimestamp(),
@@ -82,11 +114,18 @@ class _CheckoutLoginDialogState extends State<CheckoutLoginDialog> {
     }
 
     if (!mounted) return;
-    Navigator.pop(context);
+
+    setCheckoutLoginFlagGlobal(false);
+
     widget.onLoginSuccess();
+
+    if (mounted) {
+      Navigator.pop(context);
+    }
   }
 
-  void _showSnackBar(String message) {
+  void showSnackBar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
@@ -103,7 +142,6 @@ class _CheckoutLoginDialogState extends State<CheckoutLoginDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Close button
               Align(
                 alignment: Alignment.topRight,
                 child: IconButton(
@@ -113,9 +151,7 @@ class _CheckoutLoginDialogState extends State<CheckoutLoginDialog> {
                   constraints: const BoxConstraints(),
                 ),
               ),
-
               const SizedBox(height: 8),
-
               Text(
                 _isSignUp ? 'Create Account' : 'Login to Continue',
                 style: const TextStyle(
@@ -124,9 +160,7 @@ class _CheckoutLoginDialogState extends State<CheckoutLoginDialog> {
                 ),
                 textAlign: TextAlign.center,
               ),
-
               const SizedBox(height: 8),
-
               Text(
                 _isSignUp
                     ? 'Sign up to place your order'
@@ -134,10 +168,37 @@ class _CheckoutLoginDialogState extends State<CheckoutLoginDialog> {
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Colors.grey),
               ),
-
               const SizedBox(height: 24),
 
-              // Email field
+              if (_isSignUp) ...[
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    hintText: 'Full Name',
+                    prefixIcon: const Icon(Icons.person),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              if (_isSignUp) ...[
+                TextField(
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    hintText: 'Phone Number',
+                    prefixIcon: const Icon(Icons.phone),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
               TextField(
                 controller: emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -149,29 +210,37 @@ class _CheckoutLoginDialogState extends State<CheckoutLoginDialog> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 16),
 
-              // Password field
               TextField(
                 controller: passwordController,
-                obscureText: true,
+                obscureText: _obscurePassword,
                 decoration: InputDecoration(
                   hintText: 'Password',
                   prefixIcon: const Icon(Icons.lock),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
               ),
-
               const SizedBox(height: 24),
 
-              // Login/Signup button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handleAuth,
+                  onPressed: _isLoading ? null : handleAuth,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -198,10 +267,8 @@ class _CheckoutLoginDialogState extends State<CheckoutLoginDialog> {
                           ),
                 ),
               ),
-
               const SizedBox(height: 16),
 
-              // Toggle between login and signup
               Center(
                 child: RichText(
                   text: TextSpan(
@@ -222,9 +289,11 @@ class _CheckoutLoginDialogState extends State<CheckoutLoginDialog> {
                         recognizer:
                             TapGestureRecognizer()
                               ..onTap = () {
-                                setState(() {
-                                  _isSignUp = !_isSignUp;
-                                });
+                                setState(() => _isSignUp = !_isSignUp);
+                                nameController.clear();
+                                phoneController.clear();
+                                emailController.clear();
+                                passwordController.clear();
                               },
                       ),
                     ],

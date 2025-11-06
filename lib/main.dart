@@ -1,5 +1,6 @@
 import 'package:Tiffinity/data/constants.dart';
 import 'package:Tiffinity/data/notifiers.dart';
+import 'package:Tiffinity/data/auth_flag.dart';
 import 'package:Tiffinity/views/auth/welcome_page.dart';
 import 'package:Tiffinity/views/pages/admin_pages/admin_widget_tree.dart';
 import 'package:Tiffinity/views/pages/customer_pages/customer_widget_tree.dart';
@@ -13,12 +14,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await dotenv.load();
-
   await Firebase.initializeApp();
   await NotificationService().initialize();
-
   runApp(const MyApp());
 }
 
@@ -30,10 +28,19 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  late Widget _currentHome;
+  bool _isInitialized = false;
+
   @override
   void initState() {
     super.initState();
     initThemeMode();
+    _initializeApp();
+  }
+
+  void _initializeApp() async {
+    _currentHome = await _decideStartPage();
+    setState(() => _isInitialized = true);
   }
 
   void initThemeMode() async {
@@ -44,15 +51,17 @@ class _MyAppState extends State<MyApp> {
 
   Future<Widget> _decideStartPage() async {
     User? user = FirebaseAuth.instance.currentUser;
+
     if (user != null) {
-      // Fetch role from Firestore
       DocumentSnapshot userDoc =
           await FirebaseFirestore.instance
               .collection('users')
               .doc(user.uid)
               .get();
+
       if (userDoc.exists && userDoc['role'] != null) {
         String role = userDoc['role'];
+
         if (role == 'customer') {
           return const CustomerWidgetTree();
         } else if (role == 'admin') {
@@ -60,7 +69,7 @@ class _MyAppState extends State<MyApp> {
         }
       }
     }
-    // Default if not logged in or role not found
+
     return const WelcomePage();
   }
 
@@ -77,17 +86,27 @@ class _MyAppState extends State<MyApp> {
               brightness: isDarkMode ? Brightness.dark : Brightness.light,
             ),
           ),
-          home: FutureBuilder(
-            future: _decideStartPage(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                );
-              }
-              return snapshot.data ?? const WelcomePage();
-            },
-          ),
+          home:
+              _isInitialized
+                  ? StreamBuilder<User?>(
+                    stream: FirebaseAuth.instance.authStateChanges(),
+                    builder: (context, snapshot) {
+                      // ✅ Use the getter function
+                      if (getCheckoutLoginFlag()) {
+                        return _currentHome;
+                      }
+
+                      final user = snapshot.data;
+                      if (user == null) {
+                        _currentHome = const WelcomePage();
+                      }
+
+                      return _currentHome;
+                    },
+                  )
+                  : const Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  ),
         );
       },
     );

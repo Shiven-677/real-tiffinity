@@ -1113,8 +1113,38 @@ class _MenuPageState extends State<MenuPage> {
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: () {
-                                Navigator.pop(context);
-                                _showPickupTimeDialog(totalAmount);
+                                // ✅ Check authentication BEFORE showing time picker
+                                final currentUser =
+                                    FirebaseAuth.instance.currentUser;
+
+                                if (currentUser == null) {
+                                  // Close cart sheet first
+                                  Navigator.pop(context);
+                                  // Show login dialog
+                                  showDialog(
+                                    context: context,
+                                    barrierDismissible: false,
+                                    builder:
+                                        (ctx) => CheckoutLoginDialog(
+                                          onLoginSuccess: () {
+                                            Navigator.of(ctx).pop();
+                                            // After login, show cart again, then time picker
+                                            Future.delayed(
+                                              const Duration(milliseconds: 300),
+                                              () {
+                                                if (mounted) {
+                                                  showCartBottomSheet(context);
+                                                }
+                                              },
+                                            );
+                                          },
+                                        ),
+                                  );
+                                } else {
+                                  // User is logged in, proceed normally
+                                  Navigator.pop(context);
+                                  _showPickupTimeDialog(totalAmount);
+                                }
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color.fromARGB(
@@ -1167,7 +1197,7 @@ class _MenuPageState extends State<MenuPage> {
   void checkout(double totalAmount, String pickupTime) async {
     final currentUser = FirebaseAuth.instance.currentUser;
 
-    // Require login
+    // Check if user is logged in FIRST
     if (currentUser == null) {
       if (mounted) {
         await showDialog(
@@ -1175,22 +1205,23 @@ class _MenuPageState extends State<MenuPage> {
           barrierDismissible: false,
           builder:
               (ctx) => CheckoutLoginDialog(
-                onLoginSuccess: () async {
-                  // Close the dialog first
+                onLoginSuccess: () {
+                  // Close the login dialog
                   Navigator.of(ctx).pop();
-
-                  // Option A: re-run checkout with same parameters
-                  // Be careful to avoid infinite loops if login fails repeatedly.
-                  await Future.delayed(const Duration(milliseconds: 200));
-                  checkout(totalAmount, pickupTime); // reuse the same values
+                  // After successful login, show pickup time dialog again
+                  Future.delayed(const Duration(milliseconds: 300), () {
+                    if (mounted) {
+                      _showPickupTimeDialog(totalAmount);
+                    }
+                  });
                 },
               ),
         );
       }
-      return;
+      return; // Stop execution if not logged in
     }
 
-    // Collect cart items for this mess
+    // User is logged in, proceed with order
     final currentCart = _getCurrentMessCart();
     if (currentCart.isEmpty) {
       if (mounted) {
@@ -1219,7 +1250,7 @@ class _MenuPageState extends State<MenuPage> {
     }
 
     try {
-      // 2) Read mess basic details (defensive fallbacks)
+      // 2) Read mess basic details
       final messDoc =
           await FirebaseFirestore.instance
               .collection('messes')
@@ -1246,9 +1277,8 @@ class _MenuPageState extends State<MenuPage> {
 
       // 4) Create order id and references
       final ordersCol = FirebaseFirestore.instance.collection('orders');
-      final customOrderId =
-          OrderIDGenerator.generateOrderID(); // Generate custom ID
-      final orderRef = ordersCol.doc(customOrderId); // Use custom ID as doc ID
+      final customOrderId = OrderIDGenerator.generateOrderID();
+      final orderRef = ordersCol.doc(customOrderId);
       final orderId = customOrderId;
 
       // 5) Persist order document
@@ -1259,11 +1289,9 @@ class _MenuPageState extends State<MenuPage> {
         'messOwnerId': messOwnerId,
         'messPhone': messPhone,
         'messAddress': messAddress,
-
         'customerId': currentUser.uid,
         'customerEmail': currentUser.email,
-        'customerName': displayName, // ✅ store resolved name
-
+        'customerName': displayName,
         'items': orderItems,
         'totalAmount': totalAmount,
         'status': 'Pending',
@@ -1273,22 +1301,28 @@ class _MenuPageState extends State<MenuPage> {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      // 6) Notify mess (uses customerName and your mipmap icon in service)
+      // 6) Notify mess
       await NotificationService().sendOrderNotificationToMess(
         messId: widget.messId,
-        orderId: orderId, // ✅ real id
-        customerName: displayName, // ✅ resolved name
+        orderId: orderId,
+        customerName: displayName,
         totalAmount: totalAmount,
       );
 
-      // 7) Clear only this mess cart
-      cartNotifier.value = {};
+      // 7) Clear cart for this mess
+      final updatedCart = Map<String, CartItem>.from(cartNotifier.value);
+      currentCart.keys.forEach((key) => updatedCart.remove(key));
+      cartNotifier.value = updatedCart;
+
       if (mounted) {
-        Navigator.pop(context); // close any bottom sheet/dialog
+        // Close cart bottom sheet if open
+        Navigator.of(context).popUntil((route) => route.isFirst);
+
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Order placed: #$orderId')));
-        // Optional: navigate to tracking
+
+        // Navigate to tracking page
         Navigator.push(
           context,
           MaterialPageRoute(
